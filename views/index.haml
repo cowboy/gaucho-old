@@ -1,0 +1,7 @@
+%h1="foo"
+
+All categories:
+%ul#all_categories
+  - @categories.each do |cat|
+    %li
+      = cat
