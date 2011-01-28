@@ -1,7 +1,24 @@
 %h1="foo"
 
+Recent content:
+%ul#all_content
+  - @recent_contents.each do |content|
+    %li
+      %a(href="#{content.url_canonical}")= content.meta.title
+      %div= content.meta.excerpt
+      %div
+        %em
+          = content.commits.length == 1 ? 'Created on' : 'Last updated on'
+          = date_format(content.commit.committed_date)
+
 All categories:
 %ul#all_categories
   - @categories.each do |cat|
     %li
-      = cat
+      %a(href="#{cat_url cat}")= cat
+
+All tags:
+%ul#all_tags
+  - @tags.each do |tag|
+    %li
+      %a(href="#{tag_url tag}")= tag
