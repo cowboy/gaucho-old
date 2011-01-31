@@ -1,3 +1,4 @@
+require 'delegate'
 require 'sinatra'
 require 'grit'
 require 'haml'
@@ -12,81 +13,10 @@ set :haml, format: :html5, attr_wrapper: '"'
 enable :inline_templates
 
 =begin
-# Redefine Content/Asset URLs if necessary.
-module Gaucho
-  class Content
-    def url
-      commit.latest? ? canonical : permalink
-    end
-    def canonical
-      "/#{name}"
-    end
-    def permalink
-      "/#{name}/#{commit.short_sha}"
-    end
-  end
-  class Asset
-    def url
-      "/#{short_sha}/#{name}"
-    end
-  end
-end
-=end
-#Grit.debug = true
-repo = Gaucho::Repo.new(File.expand_path('../db/test'), subdir: false)
+#repo = Gaucho::Repo.new(File.expand_path('../db/test'), subdir: false)
 
 not_found do
   "<h1>OMG 404</h1>#{' '*512}"
-end
-
-=begin
-# BLOB
-# /{sha}/{file}
-get %r{^/([0-9a-f]{7})/(.+)$} do |sha, file|
-  pp ['blob', params[:captures]]
-  blob = repo.blob(sha)
-  if blob.nil?
-    pass
-  else
-    content_type File.extname(file) rescue content_type :txt
-    blob.data
-    # TODO: cache heavily
-  end
-end
-
-# PAGE
-# /{name}
-# /{name}/{sha}
-get %r{^/([-\w]+)(?:/([0-9a-f]{7}))?$} do |name, sha|
-  pp ['page', params[:captures]]
-  begin
-    @page = repo.content(name, sha)
-    pp @page
-    @page.to_html
-    #@title = @page.meta[:title]
-    #@content = @page.to_html
-    #haml :page
-  rescue Exception => e
-    #raise e
-    pp e
-    pass
-  end
-end
-=end
-
-helpers do
-  def date_format(date)
-    #ugly = date.strftime('%a, %d %b 1970 00:00:00 GMT-0400')
-    ugly = date.strftime('%s')
-    pretty = date.strftime('%b %e, %Y at %l:%M%P')
-    %Q{<span data-date="#{ugly}">#{pretty}</span>}
-  end
-  def tag_url(tag)
-    "/content-tagged-#{tag}"
-  end
-  def cat_url(cat)
-    "/categorized-as-#{cat}"
-  end
 end
 
 # INDEX
@@ -137,81 +67,97 @@ get %r{^(?:/(__fs__|[0-9a-f]{7}))?/([-\w]+)(?:/(.+))?$} do |sha, name, file|
     #pass
   end
 end
+=end
 
-=begin
-#Grit.debug = true
-content = repo.content('c', '680d7c8')
-content.commit.diffs.each do |diff|
-  pp diff.diff.diff
+module Gaucho
+  class << self
+    attr_accessor :repo, :repo_path
+  end
+
+  def self.new(repo_path)
+    self.repo_path = repo_path
+    self.repo = Grit::Repo.new(repo_path)
+    
+    App
+  end
+  
+  class PageNotFound < Sinatra::NotFound
+  end
+  
+  class FileNotFound < Sinatra::NotFound
+    def initialize(name)
+      #p "FileNotFound: #{name}"
+    end
+  end
+  
+  class App < Sinatra::Base
+    helpers do
+      def date_format(date)
+        #ugly = date.strftime('%a, %d %b 1970 00:00:00 GMT-0400')
+        ugly = date.strftime('%s')
+        pretty = date.strftime('%b %e, %Y at %l:%M%P')
+        %Q{<span data-date="#{ugly}">#{pretty}</span>}
+      end
+      def page_commit_link(page, commit = nil)
+        %Q{<a href="#{page.url_at_commit(commit)}">#{commit.id[0..6]}</a>}
+      end
+      def tag_url(tag)
+        "/content-tagged-#{tag}"
+      end
+      def cat_url(cat)
+        "/categorized-as-#{cat}"
+      end
+    end
+
+    not_found do
+      "<h1>OMG 404</h1>#{' '*512}"
+    end
+
+    get %r{^(?:/(__fs__|[0-9a-f]{7}))?/?$} do |sha|
+      pp ['content', params[:captures]]
+      #start_time = Time.now
+      @pages = Gaucho::Page.all(sha)
+      #pp "Time: #{Time.now - start_time}"
+      @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
+      @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
+      @pages.sort! {|a,b| b.commits.last.committed_date <=> a.commits.last.committed_date}
+      haml :index
+    end
+
+    # PAGE
+    # /{name}
+    # /{sha}/{name}
+    # /{sha}/{name}/{file}
+    # /__fs__/{name}
+    # /__fs__/{name}/{file}
+    get %r{^(?:/(__fs__|[0-9a-f]{7}))?/([-\w]+)(?:/(.+))?$} do |sha, name, file|
+      pp ['content', params[:captures]]
+      begin
+        if file
+          content_type File.extname(file) rescue content_type :txt
+          (Gaucho::Page.parent_tree(sha)/name/file).data
+          #Gaucho::Page.new(name, sha)/file#slower
+        else
+          @page = Gaucho::Page.new(name, sha)
+          @commit = Gaucho::Commit.commit(@page, @page.commit)
+          @commits = Gaucho::Commit.commits(@page, @page.commits)
+          @title = @page.title
+          #color = "%06x" % (rand * 0xffffff)
+          #{}"<h1 style='color:##{color}'>#{Time.now.strftime('%b %e, %Y at %l:%M:%S %P')}</h1>" +
+          @content = @page.render
+          haml :page
+        end
+      #rescue
+      #  raise Sinatra::NotFound
+      end
+    end
+
+  end
+
 end
 
-p '========================'
-c = repo.content('c')
-pp c.commits
-p '========================'
-c = repo.content('c', '__fs__')
-pp c.commits
+#app = Gaucho.new(File.expand_path('../db/test'))
+#app.commits
 
-c = repo.content('c', '680d7c8')
-pp c.treeish
-pp c.id
-pp c.short_sha
 
-pp Gaucho::Renderer.filter_map
-c = repo.content('c', '680d7c8')
-pp c
-pp c.contents
-pp c.commits
 
-c = repo.content('a','90cc550')
-pp c
-pp c.index
-pp c/'index.md'
-pp c/'test.txt'
-pp c/'foo/'
-pp c/'foo/a.txt'
-#pp (c/'foo/a.txt').name
-pp c/'foo/b.txt'
-pp c/'bar/b.txt'
-pp c/'bar/c.txt'
-#c.commits.each {|commit| pp commit; pp commit.diffs}
-
-#pp repo.content('c').files
-=end
-=begin
-repo = Gaucho::Repo.new(File.expand_path('../db1'), subdir: 'pages')
-
-b = repo.blob('0364790')
-pp b
-pp b.data
-pp repo.blob('9999999')
-pp '==='
-content = repo.content('c', '6fa70c2')
-pp content.url
-pp repo.contents
-pp '==='
-#pp content.commits
-pp content
-pp content.commits.length
-pp content.commit
-pp content.commit.latest?
-pp content.commit.diffs
-pp content.commit('680d7c8')
-pp content.commit('680d7c8').diffs
-pp '==='
-content.pointer = '680d7c8'
-pp content
-pp content.commit
-pp content.commit.latest?
-pp content.commit.diffs
-pp content.meta
-pp '==='
-content.pointer = nil
-pp content
-pp content.commit
-pp content.commit.latest?
-pp content.commit.diffs
-pp content.meta
-pp content.assets
-pp content.index
-=end

@@ -1,0 +1,44 @@
+%h1= @title
+
+%p Last updated on #{date_format(@commits.last.committed_date)}
+
+- unless @commit.latest?
+  %p
+    %em
+      The content you are viewing is out of date. View the
+      %a(href="#{@page.url}") most recent revision.
+      -#was updated on
+      -#%a(href="#commit-#{c.short_sha}") #{date_format(c.committed_date)}.
+
+~ @content
+
+%h3 Tags
+%ul#tags
+  - @page.tags.each do |tag|
+    %li
+      %a(href="#{tag_url tag}")= tag
+
+%h3 Categories
+%ul#categories
+  - @page.categories.each do |cat|
+    %li
+      %a(href="#{cat_url cat}")= cat
+
+%h3 Revisions
+%ul#revisions
+  - @commits.reverse.each do |c|
+    %li{ class: c.shown? && 'shown', id: "commit-#{c.id[0..6]}" }
+      %a(href="#{c.latest? ? @page.url : @page.url_at_commit(c)}")
+        %span.date= date_format(c.committed_date)
+        \-
+        %span.message= c.message
+      -#%span.author= c.committer
+      %ul.diffs
+        - c.diffs.each do |d|
+          - link = capture_haml do
+            %a(href="#{@page.url_at_commit(c)}/#{d.file}") #{d.file}
+          %li{ class: d.status }
+            %span.title #{link} #{d.status}
+            ~ Gaucho::Renderer.render_diff(d) unless d.deleted?
+
+%h3 Comments

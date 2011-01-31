@@ -1,44 +1,43 @@
 # A wrapper for Grit::Commit
 module Gaucho
   class Commit
-    include Gaucho::ShortSha
-    attr_reader :content, :commit, :diffs
+    attr_reader :page, :commit, :diffs
 
-    def initialize(content, commit)
-      @content = content
+    def initialize(page, commit)
+      @page = page
       @commit = commit
-      @diffs = Gaucho::Diff.diffs(content, commit.show)
+      @diffs = Gaucho::Diff.diffs(page, commit.show)
     end
 
     # Pretty inspection.
     def inspect
-      p = pointer? ? '*' : ''
-      %Q{#<Gaucho::Commit#{p} "#{short_sha}" "#{committed_date}" "#{short_message}">}
+      p = shown? ? '*' : ''
+      %Q{#<Gaucho::Commit#{p} "#{id}" "#{committed_date}" "#{short_message}">}
     end
 
-    # Is this commit the most recent commit for the Content?
+    # Is this commit the most recent commit for the Page?
     def latest?
-      id == content.commits.first.id
+      id == page.commit_ids.last
     end
 
-    # Is this commit the currently pointed-to commit for the Content?
-    def pointer?
-      id == content.commit.id
+    # Is this commit the currently shown commit for the Page?
+    def shown?
+      id == page.commit_id
     end
 
-    # Pass-through all methods to the underlying Grit::Commit instance.
+    # Pass-through all other methods to the underlying Grit::Commit instance.
     def method_missing(name, *args)
       commit.send(name, *args) if commit.respond_to?(name)
     end
 
     # Get a single Commit instance.
-    def self.commit(content, commit)
-      self.new(content, commit)
+    def self.commit(page, commit)
+      self.new(page, commit)
     end
 
     # Get an array of Commit instances.
-    def self.commits(content, commits)
-      commits.collect {|commit| self.commit(content, commit)}.compact
+    def self.commits(page, commits)
+      commits.collect {|commit| self.commit(page, commit)}.compact
     end
   end
 end

@@ -7,9 +7,10 @@ require 'find'
 
 # Gaucho stuff.
 require 'gaucho/util'
-require 'gaucho/content'
+require 'gaucho/page'
 require 'gaucho/renderer'
-require 'gaucho/repo'
+#require 'gaucho/content'
+#require 'gaucho/repo'
 require 'gaucho/commit'
 require 'gaucho/diff'
 #require 'gaucho/blob'

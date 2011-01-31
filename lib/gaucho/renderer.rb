@@ -6,9 +6,9 @@ require 'rack'
 include Rack::Utils
 
 module Gaucho
-  class Content
+  class Page
     def render
-      Gaucho::Renderer.render_content(self)
+      Gaucho::Renderer.render_page(self)
     end
   end
 
@@ -70,7 +70,9 @@ module Gaucho
     # {{ example.js | code }}
     def self.code(o)
       lang ||= File.extname(o.name)[1..-1]
-      code = Pygments.highlight(o.data, lang, :html, noclasses: true, linenos: :table)
+      # TODO: TEST IS_PRODUCTION
+      code = text(o)
+      #code = Pygments.highlight(o.data, lang, :html, noclasses: true, linenos: :table)
       "#{code}<div class='highlight-link'>#{link(o)}</div>"
     end
 
@@ -78,7 +80,7 @@ module Gaucho
     #
     # <img src="{{ image.jpg | url }}">
     def self.url(o)
-      "#{o.content.url}/#{o.name}"
+      "#{o.page.url_at_commit}/#{o.name}"
     end
 
     # Embed an asset script.
@@ -137,11 +139,11 @@ module Gaucho
     end
 
     # Render content recursively, starting with index.
-    def self.render_content(content, data = nil, name = nil, filter = nil, arg = nil)
-      data = content.meta.index.data if data.nil?
-      name = content.meta.index.name if name.nil?
+    def self.render_page(page, data = nil, name = nil, filter = nil, arg = nil)
+      data = page.content if data.nil?
+      name = page.meta.index_name if name.nil?
       filter = filter_from_name(name) if filter.nil?
-      p [name, filter, arg, data.class, data.valid_encoding?]
+      #p [name, filter, arg, data.class, data.valid_encoding?]
       
       if data.valid_encoding? && data =~ /\{\{/
         # Process all {{ ... }} substrings.
@@ -161,10 +163,10 @@ module Gaucho
           # filename and @filter_map.
           filters = [filter_from_name(name)] if filters.empty?
 
-          result = content/name || ''
+          result = page/name rescue ''
           filters.each do |f, a|
-            p ['*', name, f, a]
-            result = render_content(content, result, name, f.to_sym, a)# rescue '12345'
+            #p ['*', name, f, a]
+            result = render_page(page, result, name, f.to_sym, a)# rescue '12345'
           end
 
           result
@@ -173,14 +175,14 @@ module Gaucho
 
       # If a filter exists to handle this request, use it, otherwise error.
       if respond_to?(filter)
-        send(filter, filter_metadata(content, data, name, arg))
+        send(filter, filter_metadata(page, data, name, arg))
       else
         invalid_filter(filter, name)
       end
     end
 
     # Create a metadata object to be passed into a filter method.
-    def self.filter_metadata(content, data, name, arg)
+    def self.filter_metadata(page, data, name, arg)
       # Split arg on commas into an array of "args".
       args = (arg || '').split(/\s*,\s*/)
 
@@ -192,7 +194,7 @@ module Gaucho
       args.each {|key| flags[key] = true}
 
       Gaucho::Config.new({
-        content: content,
+        page: page,
         data: data,
         name: name,
         arg: arg,
@@ -222,6 +224,7 @@ module Gaucho
       data = diff.data.split("\n").reject {|line| line =~ /^[-+]{3}/ }.join("\n")
       data.force_encoding('utf-8')
       if diff.data.valid_encoding?
+        # TODO: TEST IS_PRODUCTION
         #Pygments.highlight(data, :diff, :html, noclasses: true)
         "<pre>#{escape_html(data)}</pre>"
       else

@@ -37,7 +37,7 @@ module Gaucho
     end
 
     ## Get a full SHA from a treeish. (TODO: REMOVE?)
-    def sha(treeish)
+    def rev_parse(treeish)
       repo.git.native(:rev_parse, {raise: true}, treeish) rescue nil
     end
   end
