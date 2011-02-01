@@ -2,6 +2,12 @@
 
 %p Last updated on #{date_format(@commits.last.committed_date)}
 
+- if @page.show_local_mods
+  %p
+    %em
+      Note: Showing local modifications. View the
+      %a(href="#{@page.url_at_commit(@commits.last)}") most recent revision.
+
 - unless @commit.latest?
   %p
     %em
@@ -27,8 +33,8 @@
 %h3 Revisions
 %ul#revisions
   - @commits.reverse.each do |c|
-    %li{ class: c.shown? && 'shown', id: "commit-#{c.id[0..6]}" }
-      %a(href="#{c.latest? ? @page.url : @page.url_at_commit(c)}")
+    %li{ class: c.shown? && 'shown', id: "commit-#{c.short_sha}" }
+      %a(href="#{@page.url_at_commit(c)}")
         %span.date= date_format(c.committed_date)
         \-
         %span.message= c.message
@@ -39,6 +45,6 @@
             %a(href="#{@page.url_at_commit(c)}/#{d.file}") #{d.file}
           %li{ class: d.status }
             %span.title #{link} #{d.status}
-            ~ Gaucho::Renderer.render_diff(d) unless d.deleted?
+            ~ Gaucho::Renderer.render_diff(d, @render_opts) unless d.deleted?
 
 %h3 Comments

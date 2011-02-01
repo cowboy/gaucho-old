@@ -1,18 +1,11 @@
-require 'rdiscount'
-require 'rb-pygments'
-
-# For the escape_html helper.
-require 'rack'
-include Rack::Utils
-
 module Gaucho
   class Page
-    def render
-      Gaucho::Renderer.render_page(self)
+    def render(data = nil, options = {})
+      Gaucho::Renderer.render_page(self, data, options)
     end
   end
 
-  # Render a Page recursively.
+  # Render a Page.
   #
   # All internal asset links processed via the {{...}} syntax will incorporate
   # the current SHA when rendering, so be sure to use the {{...}} syntax for
@@ -40,7 +33,7 @@ module Gaucho
     #
     # {{ toc }}
     def self.toc(o)
-      '<!--TOC_PLACEHOLDER-->'
+      %Q{<!--TOC_PLACEHOLDER-->}
     end
 
     # Embed html.
@@ -55,7 +48,7 @@ module Gaucho
     # {{ content.txt | text }}
     # {{ content.txt | text(class="awesome-pre") }}
     def self.text(o)
-      "<pre#{o.attrs}>#{escape(o)}</pre>"
+      %Q{<pre#{o.attrs}>#{escape(o)}</pre>}
     end
 
     # Escape HTML.
@@ -70,10 +63,12 @@ module Gaucho
     # {{ example.js | code }}
     def self.code(o)
       lang ||= File.extname(o.name)[1..-1]
-      # TODO: TEST IS_PRODUCTION
-      code = text(o)
-      #code = Pygments.highlight(o.data, lang, :html, noclasses: true, linenos: :table)
-      "#{code}<div class='highlight-link'>#{link(o)}</div>"
+      code = if o.no_highlight
+        text(o)
+      else
+        Pygments.highlight(o.data, lang, :html, noclasses: true, linenos: :table)
+      end
+      %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
 
     # Get a raw Blob URL.
@@ -88,7 +83,7 @@ module Gaucho
     # {{ awesome.js | script }}
     # {{ awesome.js | script(id="test") }}
     def self.script(o)
-      "<script src='#{url(o)}'#{o.attrs}></script>"
+      %Q{<script src="#{url(o)}"#{o.attrs}></script>}
     end
 
     # Embed an asset CSS stylesheet.
@@ -96,7 +91,7 @@ module Gaucho
     # {{ pretty.css | css }}
     # {{ pretty.css | css(media="screen") }}
     def self.css(o)
-      "<link href='#{url(o)}' rel='stylesheet' type='text/css'#{o.attrs}>"
+      %Q{<link href="#{url(o)}" rel="stylesheet" type="text/css"#{o.attrs}>}
     end
 
     # Embed an asset image.
@@ -104,7 +99,7 @@ module Gaucho
     # {{ image.jpg | image }}
     # {{ image.jpg | image(width="20" style="float:right") }}
     def self.image(o)
-      "<img src='#{url(o)}'#{o.attrs}>"
+      %Q{<img src="#{url(o)}"#{o.attrs}>}
     end
 
     # Embed an asset link.
@@ -113,7 +108,7 @@ module Gaucho
     # {{ file.txt | link(class="popup") }}
     def self.link(o, download = false)
       query_string = download ? '?dl=1' : ''
-      "<a href='#{url(o)}#{query_string}'#{o.attrs}>#{o.name}</a>"
+      %Q{<a href="#{url(o)}#{query_string}"#{o.attrs}>#{o.name}</a>}
     end
 
     # Embed a downloadable asset link.
@@ -139,7 +134,7 @@ module Gaucho
     end
 
     # Render content recursively, starting with index.
-    def self.render_page(page, data = nil, name = nil, filter = nil, arg = nil)
+    def self.render_page(page, data = nil, options = {}, name = nil, filter = nil, arg = nil)
       data = page.content if data.nil?
       name = page.meta.index_name if name.nil?
       filter = filter_from_name(name) if filter.nil?
@@ -166,7 +161,7 @@ module Gaucho
           result = page/name rescue ''
           filters.each do |f, a|
             #p ['*', name, f, a]
-            result = render_page(page, result, name, f.to_sym, a)# rescue '12345'
+            result = render_page(page, result, options, name, f.to_sym, a)# rescue '12345'
           end
 
           result
@@ -175,14 +170,14 @@ module Gaucho
 
       # If a filter exists to handle this request, use it, otherwise error.
       if respond_to?(filter)
-        send(filter, filter_metadata(page, data, name, arg))
+        send(filter, filter_metadata(page, data, options, name, arg))
       else
         invalid_filter(filter, name)
       end
     end
 
     # Create a metadata object to be passed into a filter method.
-    def self.filter_metadata(page, data, name, arg)
+    def self.filter_metadata(page, data, options, name, arg)
       # Split arg on commas into an array of "args".
       args = (arg || '').split(/\s*,\s*/)
 
@@ -193,7 +188,7 @@ module Gaucho
       flags = {}
       args.each {|key| flags[key] = true}
 
-      Gaucho::Config.new({
+      Gaucho::Config.new(options.merge({
         page: page,
         data: data,
         name: name,
@@ -201,7 +196,7 @@ module Gaucho
         args: args,
         attrs: attrs,
         flags: flags
-      })
+      }))
     end
 
     # Get the appropriate filter for a give filename.
@@ -216,19 +211,21 @@ module Gaucho
 
     # Handle invalid filters in a helpful way.
     def self.invalid_filter(filter, asset)
-      "<span class='error.filter'>Invalid filter: #{filter} (#{asset})</span>"
+      %Q{<span class="error.filter">Invalid filter: #{filter} (#{asset})</span>}
     end
 
     # Render diffs for page revision history.
-    def self.render_diff(diff)
-      data = diff.data.split("\n").reject {|line| line =~ /^[-+]{3}/ }.join("\n")
+    def self.render_diff(diff, options = {})
+      data = diff.data.split("\n").reject {|line| line =~ /^[-+]{3}/}.join("\n")
       data.force_encoding('utf-8')
       if diff.data.valid_encoding?
-        # TODO: TEST IS_PRODUCTION
-        #Pygments.highlight(data, :diff, :html, noclasses: true)
-        "<pre>#{escape_html(data)}</pre>"
+        if options[:no_highlight]
+          %Q{<pre>#{escape_html(data)}</pre>}
+        else
+          Pygments.highlight(data, :diff, :html, noclasses: true)
+        end
       else
-        'oops'
+        'Binary data' # TODO: CHANGE?
       end
     end
   end

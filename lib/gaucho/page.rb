@@ -1,15 +1,19 @@
 module Gaucho
   # TODO: BETTER ERRORS
   # TODO: HANDLE SUBDIR ("Pages" class maybe)
-  # TODO: SHORT SHAS
   # TODO: "PARENT" REPO OBJECT?
+  # TODO: ADD DEFAULT OPTIONS
   class Page
-    attr_reader :id, :tree, :meta, :content
+    include ShortSha
 
-    @@commits_by_page = nil
+    attr_reader :repo, :id, :meta
+    attr_accessor :options
+
     @@default_branch = 'master' # TODO: ??
 
-    def initialize(id, treeish = nil)
+    def initialize(repo, id, treeish = nil, options = {})
+      @repo = repo
+      @options = options
       if id.class == Grit::Tree
         @fixed_tree = true
         @id = id.name
@@ -20,16 +24,19 @@ module Gaucho
       self.shown = treeish
     end
 
+    # Pretty inspection.
+    def inspect
+      %Q{#<Gaucho::Page "#{commit.id}" "#{id}" "#{url}">}
+    end
+
     # A hash of all commits for this page.
     def commits
-      Page.build_commit_index
-      @@commits_by_page[id.to_sym]
+      repo.commits(id.to_sym)
     end
 
     # A hash of all commits ids for this page.
     def commit_ids
-      Page.build_commit_index
-      @@commit_ids_by_page[id.to_sym]
+      repo.commit_ids(id.to_sym)
     end
 
     # Set the current Page to show the specified tree-ish. Specifying nil
@@ -39,28 +46,37 @@ module Gaucho
     # id (via direct Page.new call), and not as the result of Pages.all, which
     # gets all pages at a specified tree-ish.
     def shown=(treeish)
-      @treeish = treeish
-      unless @fixed_tree
-        @tree = Page.parent_tree(treeish)/id
-        raise Gaucho::PageNotFound unless @tree
-      end
+      @shown = treeish
       build_metadata
     end
 
     # The currently-viewed (or specified) commit SHA for this page.
     def commit_id(sha = nil)
-      sha = Page.rev_parse(sha || @treeish)
-      if commit_ids.index(sha)
-        sha
+      if sha.nil? && show_local_mods
+        :filesystem
       else
-        commits.last.id
+        sha = repo.rev_parse(sha || @shown)
+        if commit_ids.index(sha)
+          sha
+        else
+          commits.last.id
+        end
       end
     end
 
     # The currently-viewed (or specified) commit for this page.
     def commit(sha = nil)
-      sha = commit_id(sha)
-      commits[commit_ids.index(sha)]
+      if show_local_mods
+        commits.last
+      else
+        sha = commit_id(sha)
+        commits[commit_ids.index(sha)]
+      end
+    end
+
+    # Sort pages by last commit date (most recent first) by default.
+    def <=>(other_page)
+      other_page.commits.last.committed_date <=> commits.last.committed_date
     end
 
     # Canonical URL for this Page.
@@ -76,7 +92,12 @@ module Gaucho
       else
         commit_id(sha)
       end
-      "/#{sha[0..6]}/#{id}"
+
+      if sha == :filesystem
+        url
+      else
+        "/#{short_sha(sha)}/#{id}"
+      end
     end
 
     # Contents of "file" (Blob) at the specified path under this Content.
@@ -85,42 +106,25 @@ module Gaucho
       @files[commit_id.to_sym][file] or raise Gaucho::FileNotFound.new(file)
     end
 
+    # Show content from local filesyste. Note: git ignores untracked files,
+    # so git add must be used on new files.
+    def show_local_mods
+      if options[:check_local_mods]
+        @shown.nil? && has_local_mods
+      else
+        false
+      end
+    end
+
+    # Does this Page have local, uncommitted modifications?
+    def has_local_mods
+      return @has_local_mods unless @has_local_mods.nil?
+      @has_local_mods = repo.has_local_mods(id)
+    end
+
     # Pass-through all other methods to the underlying metadata object.
     def method_missing(name, *args)
       meta.send(name, *args) if meta.respond_to?(name)
-    end
-
-    def self.repo_path
-      Gaucho.repo_path
-    end
-
-    def self.repo
-      Gaucho.repo
-    end
-
-    # All Page objects for this repo.
-    def self.all(treeish = nil)
-      parent_tree(treeish).trees.collect {|tree| Page.new(tree, treeish)}
-    end
-
-    # The parent Tree that contains all page trees.
-    def self.parent_tree(treeish = nil)
-      repo.tree(treeish || @@default_branch)
-    end
-
-    # A Grit::Commit object for the specified tree-ish.
-    def self.commit(treeish = nil)
-      repo.commit(treeish)
-    end
-
-    # Full SHA for the given tree-ish.
-    def self.rev_parse(treeish = nil)
-      native_git(:rev_parse, {raise: true}, treeish).chomp rescue nil
-    end
-
-    # Native git command
-    def self.native_git(*args)
-      repo.git.native(*args)
     end
 
     private
@@ -128,75 +132,70 @@ module Gaucho
       def build_metadata
         #pp 'BUILDING METADATA'
 
-        index = tree.blobs.find {|blob| blob.name =~ /^index\./} # TODO: FS
-        raise Gaucho::PageNotFound unless index
+        begin
+          if show_local_mods
+            # Iterate over files.
+            root = File.join(repo.repo_path, id)
+            index = Gaucho::Config.new
+            index.name = Dir.entries(root).find {|file| file =~ /^index\./}
+            index.data = IO.read(File.join(root, index.name))
+          else
+            # Iterate over Blobs.
+            tree = repo.pages_tree(treeish)/id
+            index = tree.blobs.find {|blob| blob.name =~ /^index\./}
+          end
+        rescue
+          raise Gaucho::PageNotFound
+        end
+
+        raise Gaucho::PageNotFound unless index.data
 
         docs = []
         YAML.each_document(index.data) {|doc| docs << doc} rescue nil
         docs = [{}, index.data] unless docs.length == 2
         @meta = Gaucho::Config.new(docs.first)
         @meta.index_name = index.name
-        @content = docs.last
+        
+        # meta.excerpt is anything before <!--more-->, meta.content is everything.
+        parts = docs.last.split(/^\s*<!--\s*more\s*-->\s*$/im)
+        @meta.excerpt = parts[0]
+        @meta.content = parts.join('')
       end
 
       # Build page sub-file index at the current treeish.
       def build_file_index
         @files ||= {}
-        cur = commit_id.to_sym
-        return if @files[cur]
+        key = commit_id.to_sym
+        return if @files[key]
 
-        pp 'BUILDING FILE INDEX'
-        @files[cur] = {}
+        start_time = Time.now
+        @files[key] = {}
 
-        # Parse the raw output from git ls-tree.
-        text = Page.native_git(:ls_tree, {:r => true, :t => true}, commit_id, id)
-        text.split("\n").each do |line|
-          thing = Page.repo.tree.content_from_string(Page.repo, line)
-          if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
-            if thing.name =~ Regexp.new("^#{id}/(.*)")
-              #pp [$1, thing.data.length]
-              @files[cur][$1] = thing.data
+        if show_local_mods
+          # Iterate over all files, recursively.
+          root = File.join(repo.repo_path, id)
+          Find.find(root) do |path|
+            if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
+              if path =~ Regexp.new("^#{root}/(.*)")
+                #pp [$1]
+                @files[key][$1] = IO.read(path)
+              end
+            end
+          end
+        else
+          # Parse the raw output from git ls-tree.
+          text = repo.git.native(:ls_tree, {:r => true, :t => true}, commit_id, id)
+          text.split("\n").each do |line|
+            thing = repo.tree.content_from_string(repo.repo, line)
+            if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
+              if thing.name =~ Regexp.new("^#{id}/(.*)")
+                #pp [$1, thing.data.length]
+                @files[key][$1] = thing.data
+              end
             end
           end
         end
-      end
-
-      # Build per-page commit index from pre-rendered ".git/file-index" file.
-      def self.build_commit_index
-        return if @@commits_by_page
-
-        pp 'BUILDING COMMIT INDEX'
-        #native_git(:log, {pretty: 'oneline', name_only: true, parents: true, reverse: true})
-        @@commits_by_page = {}
-        @@commit_ids_by_page = {}
-
-        current_id = nil # block local workaround
-        added = nil # block local workaround
-
-        index_file = File.join(repo_path, '.git', 'file-index')
-        #i = 0
-        File.foreach(index_file) do |line|
-          #i += 1
-          #break if i > 100
-          #pp line
-          if /^([0-9a-f]{40})/.match(line)
-            parent_ids = line.scan(/([0-9a-f]{40})/).flatten # TODO: REMOVE?
-            current_id = parent_ids.shift
-            added = false
-          elsif !added
-            added = true
-            line =~ %r{^(.*?)/} # TODO: HANDLE SUBDIR??
-            page_id = $1.to_sym
-            #pp [page_id, current_id]
-            commit = Gaucho::CommitLater.new(current_id) {|c| commit(c)}
-            @@commits_by_page[page_id] ||= []
-            @@commits_by_page[page_id] << commit
-            @@commit_ids_by_page[page_id] ||= []
-            @@commit_ids_by_page[page_id] << current_id
-          end
-        end
-
-        @@latest_commit = current_id # TODO: REMOVE?
+        pp "BUILT FILE INDEX IN #{Time.now - start_time} SEC"
       end
   end
 end

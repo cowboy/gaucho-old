@@ -1,4 +1,4 @@
-%h1="foo"
+%h1= @title
 
 
 Recent content:
@@ -6,7 +6,7 @@ Recent content:
   - @pages[0..5].each do |p|
     %li
       %a(href="#{p.url}")= p.title
-      %div= p.excerpt
+      %div= p.subtitle
       %div
         categories:
         - p.categories.each do |c|

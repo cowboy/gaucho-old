@@ -1,3 +1,3 @@
 #!/usr/bin/env rackup
-require './app'
-run Gaucho.new(File.expand_path('../db/test3'))
+require './gaucho'
+run Gaucho::App

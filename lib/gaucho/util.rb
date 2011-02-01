@@ -2,8 +2,8 @@ module Gaucho
   # Standardize on 7-character SHAs across-the-board. Change this if you
   # want different length short SHAs.
   module ShortSha
-    def short_sha
-      id[0..6]
+    def short_sha(sha = id)
+      sha[0..6]
     end
   end
 
@@ -25,9 +25,6 @@ module Gaucho
 
   # Because Gaucho::CommitLater.new is nicer than Gaucho::Later.new.
   class CommitLater < Later; end
-  
-  # Exception handlers.
-  #class NotFound < Exception; end
 
   # More friendly looking dot-syntax access for hash keys.
   # http://mjijackson.com/2010/02/flexible-ruby-config-objects

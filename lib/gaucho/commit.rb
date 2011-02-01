@@ -1,6 +1,8 @@
 # A wrapper for Grit::Commit
 module Gaucho
   class Commit
+    include ShortSha
+
     attr_reader :page, :commit, :diffs
 
     def initialize(page, commit)
