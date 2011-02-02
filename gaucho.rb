@@ -80,21 +80,43 @@ module Gaucho
     # /recent-changes
     get '/recent-changes' do
       pp ['recent-changes']
-      @pages = $all_pages[0..9]
+      @pages = $all_pages
       @pages.each {|p| pp p.commits.last.message}
-      'x'
+      @tags = []
+      @cats = []
+      haml :index
+    end
+
+    # DATE LISTING
+    # /{YYYY}
+    # /{YYYY}/{MM}
+    # /{YYYY}/{MM}/{DD}
+    get %r{^/(\d{4})(?:/(\d{2}))?(?:/(\d{2}))?/?$} do |year, month, day|
+      pp ['date', params[:captures]]
+      @pages = $all_pages.select {|page| page.id_date([year, month, day].compact)}
+      @tags = []
+      @cats = []
+      haml :index
     end
 
     # PAGE
     # /{name}
     # /{sha}/{name}
     # /{sha}/{name}/{file}
-    get %r{^(?:/([0-9a-f]{7}))?/([-\w]+)(?:/(.+))?$} do |sha, name, file|
+    # "name" can be (slashes are just replaced with dashes):
+    #   name
+    #   YYYY/name
+    #   YYYY/MM/name
+    #   YYYY/MM/DD/name
+    get %r{^(?:/([0-9a-f]{7}))?/(?:(\d{4}(?:/\d{2}){0,2})/)?([-\w]+)(?:/(.+))?$} do |sha, date, name, file|
       pp ['page', params[:captures]]
       options = {check_local_mods: true}
       #options = {}
       @render_opts = {no_highlight: true}
       #@render_opts = {}
+
+      name = "#{date.gsub('/', '-')}-#{name}" if date
+      #pp name
 
       @page = $repo.page(name, sha, options)
 

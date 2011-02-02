@@ -79,9 +79,22 @@ module Gaucho
       other_page.commits.last.committed_date <=> commits.last.committed_date
     end
 
-    # Canonical URL for this Page.
+    # Returns true if this Page's id matches the passed date. If no date is
+    # passed, returns true if this Page's id begins with a date.
+    def id_date(date_arr = nil)
+      if date_arr
+        date_arr.split!(%r{[/-]}) if date_arr.class == String
+        id.start_with?("#{date_arr.join('-')}-")
+      else
+        !!%r{^\d{4}-(?:\d{2}-){0,2}\D}.match(id)
+      end
+    end
+    
+    # Canonical URL for this Page. Replace any dashes in leading YYYY-,
+    # YYYY-MM- or YYYY-MM-DD- with slashes.
     def url
-      "/#{id}"
+      url = id.sub(%r{^(\d{4}(?:-\d{2}){0,2}-)}) {|d| d.gsub('-', '/')}
+      "/#{url}"
     end
 
     # URL for this Page at the specified (or most recent) commit.
@@ -96,7 +109,7 @@ module Gaucho
       if sha == :filesystem
         url
       else
-        "/#{short_sha(sha)}/#{id}"
+        "/#{short_sha(sha)}#{url}"
       end
     end
 
