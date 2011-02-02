@@ -6,7 +6,7 @@ module Gaucho
   class Page
     include ShortSha
 
-    attr_reader :repo, :id, :meta
+    attr_reader :repo, :id, :meta, :shown
     attr_accessor :options
 
     @@default_branch = 'master' # TODO: ??
@@ -141,7 +141,7 @@ module Gaucho
             index.data = IO.read(File.join(root, index.name))
           else
             # Iterate over Blobs.
-            tree = repo.pages_tree(treeish)/id
+            tree = repo.pages_tree(shown)/id
             index = tree.blobs.find {|blob| blob.name =~ /^index\./}
           end
         rescue
