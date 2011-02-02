@@ -26,8 +26,14 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    $repo = Gaucho::Repo.new(File.expand_path('../db/test'))
-    $all_pages = $repo.pages
+    $cache = Gaucho::MarshalCache.new('marshal_cache')
+
+    $repo = $cache.get('repo') do
+      repo = Gaucho::Repo.new(File.expand_path('../db/test'))
+      repo.commits(nil) # force repo to init commits
+      repo
+    end
+    $all_pages = $cache.get('all_pages') {$repo.pages}
 
     helpers do
       def date_format(date)
@@ -58,6 +64,7 @@ module Gaucho
       pp ['index', params[:captures]]
       #start_time = Time.now
       @pages = $all_pages
+      #pp @pages
       @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
       @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
       #@pages = pages_categorized('music')
@@ -118,7 +125,9 @@ module Gaucho
       name = "#{date.gsub('/', '-')}-#{name}" if date
       #pp name
 
-      @page = $repo.page(name, sha, options)
+      @page = $cache.get("page-#{name}") {$repo.page(name)}
+      @page.options = options
+      @page.shown = sha
 
       begin
         if sha
