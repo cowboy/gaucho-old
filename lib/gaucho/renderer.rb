@@ -158,7 +158,7 @@ module Gaucho
           # filename and @filter_map.
           filters = [filter_from_name(name)] if filters.empty?
 
-          result = page/name rescue ''
+          result = page/name rescue invalid_file(name)
           filters.each do |f, a|
             #p ['*', name, f, a]
             result = render_page(page, result, options, name, f.to_sym, a)# rescue '12345'
@@ -209,9 +209,14 @@ module Gaucho
       t.nil? ? type : t[0]
     end
 
+    # Handle invalid files in a helpful way.
+    def self.invalid_file(file)
+      %Q{<b style="color:red">Invalid file: #{file}</b>}
+    end
+
     # Handle invalid filters in a helpful way.
-    def self.invalid_filter(filter, asset)
-      %Q{<span class="error.filter">Invalid filter: #{filter} (#{asset})</span>}
+    def self.invalid_filter(filter, file)
+      %Q{<b style="color:red">Invalid filter: #{filter} (#{file})</b>}
     end
 
     # Render diffs for page revision history.
