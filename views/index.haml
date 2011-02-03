@@ -5,16 +5,16 @@ Recent content:
 %ul#all_content
   - @pages[0..5].each do |p|
     %li
-      %a(href="#{p.url}")= p.title
+      %a{ href: p.url }= p.title
       %div= p.subtitle
       %div
         categories:
-        - p.categories.each do |c|
-          %a(href="#{cat_url c}")= c
+        - p.categories.each do |cat|
+          %a{ href: cat_url(cat) }= cat
       %div
         tagged:
-        - p.tags.each do |t|
-          %a(href="#{tag_url t}")= t
+        - p.tags.each do |tag|
+          %a{ href: tag_url(tag) }= tag
       %div
         %em
           = p.commits.length == 1 ? 'Created on' : 'Last updated on'
@@ -22,12 +22,12 @@ Recent content:
 
 All categories:
 %ul#all_categories
-  - @cats.each do |c|
+  - @cats.each do |cat|
     %li
-      %a(href="#{cat_url c}")= c
+      %a{ href: cat_url(cat) }= cat
 
 All tags:
 %ul#all_tags
-  - @tags.each do |t|
+  - @tags.each do |tag|
     %li
-      %a(href="#{tag_url t}")= t
+      %a{ href: tag_url(tag) }= tag
