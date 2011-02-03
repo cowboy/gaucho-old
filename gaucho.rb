@@ -4,12 +4,20 @@ require 'grit'
 require 'haml'
 require 'mime/types'
 require 'delegate'
+require 'diffy'
 
 require 'pp'
 require 'profiler'
 
 require './marshal_cache'
 require './lib/gaucho'
+
+# Work around a Diffy limitation, namely the inability to specify an actual diff!
+module Diffy
+  class Diff
+    attr_writer :diff
+  end
+end
 
 module Gaucho
   class PageNotFound < Sinatra::NotFound
@@ -53,6 +61,18 @@ module Gaucho
       end
       def pages_tagged(tag)
         $all_pages.reject {|p| p.tags.index(tag).nil?}.sort
+      end
+      # Render diffs for page revision history.
+      def render_diff(diff)
+        data = diff.data
+        data.force_encoding('utf-8')
+        if data.valid_encoding?
+          d = Diffy::Diff.new('','')
+          d.diff = data
+          d.to_s(:html)
+        else
+          'Binary data' # TODO: CHANGE?
+        end
       end
     end
 
@@ -121,7 +141,7 @@ module Gaucho
       options = {check_local_mods: true}
       #options = {}
       @render_opts = {no_highlight: true}
-      #@render_opts = {}
+      @render_opts = {}
 
       name = "#{date.gsub('/', '-')}-#{name}" if date
       #pp name

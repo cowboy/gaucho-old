@@ -218,20 +218,5 @@ module Gaucho
     def self.invalid_filter(filter, file)
       %Q{<b style="color:red">Invalid filter: #{filter} (#{file})</b>}
     end
-
-    # Render diffs for page revision history.
-    def self.render_diff(diff, options = {})
-      data = diff.data.split("\n").reject {|line| line =~ /^[-+]{3}/}.join("\n")
-      data.force_encoding('utf-8')
-      if diff.data.valid_encoding?
-        if options[:no_highlight]
-          %Q{<pre>#{escape_html(data)}</pre>}
-        else
-          Pygments.highlight(data, :diff, :html, noclasses: true)
-        end
-      else
-        'Binary data' # TODO: CHANGE?
-      end
-    end
   end
 end

@@ -1,3 +1,18 @@
+:plain
+  <style>
+  .diff {overflow:auto;}
+  .diff ul{color:#000;background:#fff;overflow:auto;font-size:13px;list-style:none;margin:0;padding:0;display:table;width:100%;}
+  .diff del, .diff ins{display:block;text-decoration:none;}
+  .diff li{padding:0; display:table-row;margin: 0;height:1em;}
+  .diff li.ins{background:#dfd}
+  .diff li.del{background:#fee}
+  .diff li:hover{background:#ffc}
+  /* try 'whitespace:pre;' if you don't want lines to wrap */
+  .diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
+  .diff del strong{font-weight:normal;background:#fcc;}
+  .diff ins strong{font-weight:normal;background:#9f9;}
+  </style>
+
 %a{ href: '/' } &laquo; Index
 
 %h1= @title
@@ -55,6 +70,6 @@
               %a{ href: "#{@page.url_at_commit(c)}/#{d.file}" } #{d.file}
             %li{ class: d.status }
               %span.title #{link} #{d.status}
-              ~ Gaucho::Renderer.render_diff(d, @render_opts) unless d.deleted?
+              ~ render_diff(d) unless d.deleted?
 
 %h3 Comments
