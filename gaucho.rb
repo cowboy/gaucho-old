@@ -8,6 +8,7 @@ require 'delegate'
 require 'pp'
 require 'profiler'
 
+require './marshal_cache'
 require './lib/gaucho'
 
 module Gaucho
@@ -26,7 +27,7 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    $cache = Gaucho::MarshalCache.new('marshal_cache')
+    $cache = MarshalCache.new('marshal_cache')
 
     $repo = $cache.get('repo') do
       repo = Gaucho::Repo.new(File.expand_path('../db/test'))
