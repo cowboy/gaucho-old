@@ -82,12 +82,8 @@ module Gaucho
         added = nil # block local workaround
         idx = 0
 
-        #log = git.native(:log, {pretty: 'oneline', name_only: true, parents: true, reverse: true})
-        #log.split("\n").each do |line|
-
-        # git log --pretty=oneline --name-only --parents --reverse --all > .git/file-index
-        index_file = File.join(repo_path, '.git', 'file-index')
-        File.foreach(index_file) do |line|
+        log = git.native(:log, {pretty: 'oneline', name_only: true, parents: true, reverse: true})
+        log.split("\n").each do |line|
           if /^([0-9a-f]{40})/.match(line)
             parent_ids = line.scan(/([0-9a-f]{40})/).flatten # TODO: REMOVE?
             current_id = parent_ids.shift
