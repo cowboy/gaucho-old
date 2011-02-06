@@ -35,7 +35,7 @@ module Gaucho
 
     # Get all pages. This will create new Page instances for any that don't
     # already exist. This could take a while.
-    def pages(reset_shown = false)
+    def pages(reset_shown = false) # TODO: DEFAULT TO TRUE?
       build_page
       @pages.each {|page| page.shown = nil} if reset_shown
       @pages
