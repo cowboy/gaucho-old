@@ -89,11 +89,9 @@ module Gaucho
         if page_ids.nil?
           page_ids = []
           @commits_by_page.each {|page_id, commits| page_ids << page_id}
-        elsif !page_ids.respond_to?('each')
-          page_ids = [page_ids]
         end
 
-        page_ids.each do |page_id|
+        [*page_ids].each do |page_id|
           @pages_by_id[page_id] ||= Gaucho::Page.new(self, page_id, @commits_by_page[page_id])
         end
 
