@@ -10,7 +10,6 @@ require 'awesome_print'
 require 'pp'
 require 'profiler'
 
-require './marshal_cache'
 require './lib/gaucho'
 
 # Diffy limitation workaround (the inability to specify an actual diff)
@@ -36,46 +35,7 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    $cache = MarshalCache.new('marshal_cache')
-
-    start = Time.now
-=begin
-    $repo = $cache.get('repo') do
-      repo = Gaucho::Repo.new(File.expand_path('../db/test'))
-      repo.pages #('2009-06-23-gallimaufry-is-a-cool-word')
-      repo
-    end
-=end
     $repo = Gaucho::Repo.new(File.expand_path('../db/test'))
-=begin
-    p $repo.pages.length
-    pp "REPO DONE #{Time.now-start}"
-    p $repo
-    pg = $repo.page('2009/06/23/gallimaufry-is-a-cool-word')
-    pg = $repo.page('lulliloo-is-a-cool-word')
-    ap pg
-    ap pg.commits
-    ap pg.commit
-    pg.shown = 'cd19dd9'
-    pg.shown = '31f6970'
-    ap pg.commits
-    ap pg.commit
-    ap pg.commit.diffs
-    pg.shown = nil
-    ap pg.commits
-    ap pg.commit
-    ap pg.commits.first.files
-    #ap pg/'bar/escaped_html.txt' #'foo/bar/single.txt'
-    ap pg.meta.title
-    ap pg.title
-    ap pg.meta.categories
-    ap pg.categories
-    #ap pg/'test.html'
-    #ap pg.commits.last/'test.html'
-    p pg.local_mods?
-    #pg.commit.diffs.each {|diff| p diff}
-    #ap $repo.pages
-=end
 
     helpers do
       def date_format(date)
@@ -88,12 +48,6 @@ module Gaucho
       end
       def cat_url(cat)
         "/#{cat}"
-      end
-      def pages_categorized(cat)
-        $all_pages.reject {|p| p.categories.index(cat).nil?}.sort
-      end
-      def pages_tagged(tag)
-        $all_pages.reject {|p| p.tags.index(tag).nil?}.sort
       end
       # Render diffs for page revision history.
       def render_diff(diff)
@@ -130,10 +84,11 @@ module Gaucho
     # /content-tagged-{tag}
     get %r{^/stuff-tagged-([-\w]+)} do |tag|
       pp ['tag', params[:captures]]
-      @pages = pages_tagged(tag)
+      @pages = $repo.pages(true)
+      @pages.reject! {|p| p.tags.index(tag).nil?}.sort
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
       @tags = [tag]
-      @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
+      @cats = @pages.collect {|cat| cat.categories}.flatten.uniq.sort
       haml :index
     end
 
