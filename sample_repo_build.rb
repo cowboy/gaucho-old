@@ -3,7 +3,7 @@ require 'grit'
 require 'pp'
 require 'fileutils'
 
-@repo_path = File.expand_path('/Users/cowboy/Sites/benalman.com/new/db/test')
+@repo_path = File.expand_path('/Users/cowboy/Sites/benalman.com/new/db/test1')
 FileUtils.rm_rf(@repo_path)
 FileUtils.mkdir_p(@repo_path)
 FileUtils.cd(@repo_path)
@@ -71,13 +71,15 @@ EOF
 EOF
 ]
 
-@subdirs = ['', 'foo/', 'bar/', 'foo/bar/']
+@page_subdirs = ['yay/', 'nay/']
+@file_subdirs = ['', 'foo/', 'bar/', 'foo/bar/']
 
 @paths = {}
 
 def content_name_path(a)
   unless @paths[a]
     name = "#{a} is a cool word"
+    subdir = @page_subdirs.shuffle.first
     date = if rand(10) > 5
       [
         2008 + rand(2),
@@ -89,7 +91,7 @@ def content_name_path(a)
     end
     @paths[a] = [
       name,
-      "#{@repo_path}/#{date}#{name.downcase.gsub(/\s+/, '-')}"
+      "#{@repo_path}/#{subdir}#{date}#{name.downcase.gsub(/\s+/, '-')}"
     ]
   end
   @paths[a]
@@ -119,62 +121,91 @@ def add_stuff(a)
   name, path = content_name_path(a)
   incl = @all_incls.shuffle[0..1]
   incl.each do |i|
-    subdir = @subdirs.shuffle.first
+    file_subdir = @file_subdirs.shuffle.first
     index = <<EOF
 
-{{ #{subdir}#{i[0]} }}
+{{ #{file_subdir}#{i[0]} }}
 
 #{@all_texts.shuffle[0]}
 EOF
     File.open("#{path}/index.md", 'a') {|f| f.write(index)}
   
-    FileUtils.mkdir_p("#{path}/#{subdir}")
-    File.open("#{path}/#{subdir}#{i[0]}", 'w') {|f| f.write(i[1])}
+    FileUtils.mkdir_p("#{path}/#{file_subdir}")
+    File.open("#{path}/#{file_subdir}#{i[0]}", 'w') {|f| f.write(i[1])}
   end
 end
 
-def commit_article(a, update = false)
+@num_commits = 0
+
+def print_status
+  @num_commits += 1
+  print '.' if @num_commits % 10 == 1
+end
+
+def commit_article(a, added = false)
   sleep 0.1
   `git add .`
-  `git commit -m "#{update ? 'Updated' : 'Added'} '#{a}' article."`
+  `git commit -m "#{added ? 'Added' : 'Updated'} '#{a}' article."`
+  print_status
+end
+
+def commit_articles(a, b)
+  sleep 0.1
+  `git add .`
+  `git commit -m "Updated '#{a}' and '#{b}' articles."`
+  print_status
 end
 
 @articles.each {|a| a[0] = a[0].upcase}
 
+print 'Working'
+
 @articles.each do |a|
   create_article(a)
   add_stuff(a)
-  commit_article(a)
+  commit_article(a, true)
 end
 
 if true
-  @articles.each do |a|
+  @articles.each_index do |i|
+    next if i % 2 == 1
+    a = @articles[i]
+    b = @articles[i + 1]
     add_stuff(a)
-    commit_article(a, true)
-    add_stuff(a)
-    commit_article(a, true)
-    add_stuff(a)
-    commit_article(a, true)
+    if b
+      add_stuff(b)
+      commit_articles(a, b)
+    else
+      commit_article(a)
+    end
   end
 
   @articles.each do |a|
     add_stuff(a)
-    commit_article(a, true)
+    commit_article(a)
     add_stuff(a)
-    commit_article(a, true)
+    commit_article(a)
     add_stuff(a)
-    commit_article(a, true)
+    commit_article(a)
   end
 
   @articles.each do |a|
     add_stuff(a)
-    commit_article(a, true)
+    commit_article(a)
     add_stuff(a)
-    commit_article(a, true)
+    commit_article(a)
+  end
+
+  @articles.each do |a|
     add_stuff(a)
-    commit_article(a, true)
+    commit_article(a)
+    add_stuff(a)
+    commit_article(a)
+    add_stuff(a)
+    commit_article(a)
   end
 end
 
-`git log --pretty=oneline --name-only --parents --reverse --all > .git/file-index`
-p 'Done!'
+#`git log --pretty=oneline --name-only --parents --reverse --all > .git/file-index`
+
+puts 'done!'
