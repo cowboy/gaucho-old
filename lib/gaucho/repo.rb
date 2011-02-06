@@ -68,9 +68,8 @@ module Gaucho
           parents: true, reverse: true, timeout: false})
 
         log.split("\n").each do |line|
-          if /^([0-9a-f]{40})/.match(line)
-            parent_ids = line.scan(/([0-9a-f]{40})/).flatten # TODO: REMOVE?
-            current_id = parent_ids.shift
+          if line =~ /^([0-9a-f]{40})/
+            current_id = $1
             @commit_order[current_id] = idx += 1
             added = false
           elsif !added
