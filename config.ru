@@ -1,3 +1,3 @@
 #!/usr/bin/env rackup
-require './gaucho'
+require './app'
 run Gaucho::App

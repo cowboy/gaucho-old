@@ -1,65 +1,49 @@
 # A wrapper for Grit::Repo
 module Gaucho
+  # TODO: BETTER ERRORS
+  # TODO: HANDLE SUBDIR ("Pages" class maybe)
   class Repo
-    attr_reader :repo_path, :repo
-    attr_accessor :default_branch, :subdir, :fs_treeish, :cache
+    attr_reader :repo_path, :repo, :tree
+    attr_accessor :default_branch, :subdir
 
     def initialize(repo_path, options = {})
       @repo_path = repo_path
       @repo = Grit::Repo.new(repo_path)
-      @cache = {}
+      @tree = @repo.tree
 
       # Initialize from options, overriding these defaults.
       {
         default_branch: 'master', # TODO: MAKE THIS WORK
         #subdir: 'content'
-      }.merge(options).each {|k,v| self.send("#{k}=".to_sym, v)}
-    end
+      }.merge(options).each {|key, value| self.send("#{key}=".to_sym, value)}
 
-    # A Gaucho::Page instance.
-    def page(*args)
-      # TODO: handle subdir
-      Gaucho::Page.new(self, *args)
-    end
-
-    # All Gaucho::Page instances for this repo, at the specified tree-ish.
-    def pages(treeish = nil, options = {})
-      # TODO: handle subdir
-      pages_tree(treeish).trees.collect {|tree| page(tree, treeish, options)}.sort
-    end
-
-    # A hash of all commits for the specified page.
-    def commits(page_id)
       build_commit_index
-      cache[:commits_by_page][page_id]
     end
 
-    # A hash of all commits ids for the specified page.
-    def commit_ids(page_id)
-      build_commit_index
-      cache[:commit_ids_by_page][page_id]
+    # Pretty inspection.
+    def inspect
+      %Q{#<Gaucho::Repo "#{repo_path}">}
     end
 
-    # The parent Tree that contains all page trees.
-    def pages_tree(treeish = nil)
-      cache[:pages_trees] ||= {}
-      key = treeish.to_sym rescue :nil
-      cache[:pages_trees][key] ||= tree(treeish || default_branch)
+    # Get a specific page. This will create a new Page instance if one doesn't
+    # already exist.
+    def page(page_id)
+      page_id.gsub!('/', '-')
+      build_page(page_id)
+      @pages_by_id[page_id]
+    end
+
+    # Get all pages. This will create new Page instances for any that don't
+    # already exist. This could take a while.
+    def pages(reset_shown = false)
+      build_page
+      @pages.each {|page| page.shown = nil} if reset_shown
+      @pages
     end
 
     # Sort commits. TODO: REMOVE?
     def sort_commits(shas)
-      shas.sort {|a, b| cache[:commit_order][a].to_i <=> cache[:commit_order][b].to_i}
-    end
-
-    # Does a given page have any local modifications?
-    def has_local_mods(page_id)
-      !git.native(:status, {chdir: repo_path, porcelain: true}, page_id).empty?
-    end
-
-    # Full SHA for the given tree-ish.
-    def rev_parse(treeish = nil)
-      git.native(:rev_parse, {raise: true}, treeish).chomp rescue nil
+      shas.sort {|a, b| @commit_order[a].to_i <=> @commit_order[b].to_i}
     end
 
     # Pass-through all other methods to the underlying repo object.
@@ -69,44 +53,54 @@ module Gaucho
 
     private
 
-      # Build per-page commit index from pre-rendered ".git/file-index" file.
+      # Build commit index for this repo.
       def build_commit_index
-        return if cache[:commits_by_page]
+        return if @commits_by_page
 
-        start_time = Time.now
-        cache[:commits_by_page] = {}
-        cache[:commit_ids_by_page] = {}
-        cache[:commit_order] = {}
+        @commit_order = {}
+        @commits_by_page = {}
 
-        current_id = nil # block local workaround
-        added = nil # block local workaround
+        current_id = nil
+        added = nil
         idx = 0
 
-        log = git.native(:log, {pretty: 'oneline', name_only: true, parents: true, reverse: true})
+        log = git.native(:log, {pretty: 'oneline', name_only: true,
+          parents: true, reverse: true, timeout: false})
+
         log.split("\n").each do |line|
           if /^([0-9a-f]{40})/.match(line)
             parent_ids = line.scan(/([0-9a-f]{40})/).flatten # TODO: REMOVE?
             current_id = parent_ids.shift
-            cache[:commit_order][current_id] = @idx
-            idx += 1
+            @commit_order[current_id] = idx += 1
             added = false
           elsif !added
             added = true
             line =~ %r{^(.*?)/} # TODO: HANDLE SUBDIR??
-            page_id = $1.to_sym
-            #pp [page_id, current_id]
-            #commit = Gaucho::CommitLater.new(current_id) {|c| commit(c)}
-            commit = commit(current_id)
-            cache[:commits_by_page][page_id] ||= []
-            cache[:commits_by_page][page_id] << commit
-            cache[:commit_ids_by_page][page_id] ||= []
-            cache[:commit_ids_by_page][page_id] << current_id
+            @commits_by_page[$1] ||= []
+            @commits_by_page[$1] << current_id
           end
         end
-
-        cache[:latest_commit] = current_id # TODO: REMOVE?
-        pp "BUILT COMMIT INDEX IN #{Time.now - start_time} SEC"
       end
 
+      # Build page index for this repo. If nil is passed, build all pages,
+      # otherwise build the specified page(s).
+      def build_page(page_ids = nil)
+        @pages_by_id ||= {}
+
+        if page_ids.nil?
+          page_ids = []
+          @commits_by_page.each {|page_id, commits| page_ids << page_id}
+        elsif !page_ids.respond_to?('each')
+          page_ids = [page_ids]
+        end
+
+        page_ids.each do |page_id|
+          @pages_by_id[page_id] ||= Gaucho::Page.new(self, page_id, @commits_by_page[page_id])
+        end
+
+        @pages = []
+        @pages_by_id.each {|page_id, page| @pages << page}
+        @pages.sort!
+      end
   end
 end

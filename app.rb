@@ -6,13 +6,14 @@ require 'mime/types'
 require 'delegate'
 require 'diffy'
 
+require 'awesome_print'
 require 'pp'
 require 'profiler'
 
 require './marshal_cache'
 require './lib/gaucho'
 
-# Work around a Diffy limitation, namely the inability to specify an actual diff!
+# Diffy limitation workaround (the inability to specify an actual diff)
 module Diffy
   class Diff
     attr_writer :diff
@@ -37,12 +38,44 @@ module Gaucho
 
     $cache = MarshalCache.new('marshal_cache')
 
+    start = Time.now
+=begin
     $repo = $cache.get('repo') do
       repo = Gaucho::Repo.new(File.expand_path('../db/test'))
-      repo.commits(nil) # force repo to init commits
+      repo.pages #('2009-06-23-gallimaufry-is-a-cool-word')
       repo
     end
-    $all_pages = $cache.get('all_pages') {$repo.pages}
+=end
+    $repo = Gaucho::Repo.new(File.expand_path('../db/test'))
+=begin
+    p $repo.pages.length
+    pp "REPO DONE #{Time.now-start}"
+    p $repo
+    pg = $repo.page('2009/06/23/gallimaufry-is-a-cool-word')
+    pg = $repo.page('lulliloo-is-a-cool-word')
+    ap pg
+    ap pg.commits
+    ap pg.commit
+    pg.shown = 'cd19dd9'
+    pg.shown = '31f6970'
+    ap pg.commits
+    ap pg.commit
+    ap pg.commit.diffs
+    pg.shown = nil
+    ap pg.commits
+    ap pg.commit
+    ap pg.commits.first.files
+    #ap pg/'bar/escaped_html.txt' #'foo/bar/single.txt'
+    ap pg.meta.title
+    ap pg.title
+    ap pg.meta.categories
+    ap pg.categories
+    #ap pg/'test.html'
+    #ap pg.commits.last/'test.html'
+    p pg.local_mods?
+    #pg.commit.diffs.each {|diff| p diff}
+    #ap $repo.pages
+=end
 
     helpers do
       def date_format(date)
@@ -84,7 +117,7 @@ module Gaucho
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
       pp ['index', params[:captures]]
       #start_time = Time.now
-      @pages = $all_pages
+      @pages = $repo.pages(true)
       #pp @pages
       @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
       @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
@@ -121,7 +154,7 @@ module Gaucho
     # /{YYYY}/{MM}/{DD}
     get %r{^/(\d{4})(?:/(\d{2}))?(?:/(\d{2}))?/?$} do |year, month, day|
       pp ['date', params[:captures]]
-      @pages = $all_pages.select {|page| page.id_date([year, month, day].compact)}
+      @pages = $all_pages.select {|page| page.date?([year, month, day].compact)}
       @tags = []
       @cats = []
       haml :index
@@ -136,18 +169,12 @@ module Gaucho
     #   YYYY/name
     #   YYYY/MM/name
     #   YYYY/MM/DD/name
-    get %r{^(?:/([0-9a-f]{7}))?/(?:(\d{4}(?:/\d{2}){0,2})/)?([-\w]+)(?:/(.+))?$} do |sha, date, name, file|
+    get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[-\w]+)(?:/(.+))?$} do |sha, name, file|
       pp ['page', params[:captures]]
-      options = {check_local_mods: true}
-      #options = {}
-      @render_opts = {no_highlight: true}
-      @render_opts = {}
 
-      name = "#{date.gsub('/', '-')}-#{name}" if date
-      #pp name
-
-      @page = $cache.get("page-#{name}") {$repo.page(name)}
-      @page.options = options
+      #@page = $cache.get("page-#{name}") {$repo.page(name)}
+      @page = $repo.page(name)
+      @page.check_local_mods
       @page.shown = sha
 
       begin
@@ -159,11 +186,10 @@ module Gaucho
           content_type File.extname(file) rescue content_type :txt
           @page/file
         else
-          @page = @page
-          @commit = Gaucho::Commit.commit(@page, @page.commit)
-          @commits = Gaucho::Commit.commits(@page, @page.commits)
+          @commit = @page.commit
+          @commits = @page.commits
           @title = @page.title
-          @content = @page.render(@page.content, @render_opts)
+          @content = @page.render(@page.content, {no_highlight: true})
 
           haml(@page.layout || :page)
         end

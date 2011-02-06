@@ -1,24 +1,29 @@
 # A wrapper for Grit::Diff
 module Gaucho
   class Diff
-    attr_reader :page, :diff
+    attr_reader :commit, :diff
 
-    def initialize(page, diff)
-      @page = page
+    def initialize(commit, diff)
+      @commit = commit
       @diff = diff
     end
 
     # Pretty inspection.
     def inspect
-      %Q{#<Gaucho::Diff "#{file}" "#{status}">}
+      %Q{#<Gaucho::Diff "#{url}" "#{status}">}
+    end
+
+    # URL for this Diff's file.
+    def url
+      %Q{#{commit.url}/#{file}}
     end
 
     # Filename for this Diff.
     def file
-      diff.a_path.sub(Regexp.new("^#{page.id}/(.*)"), '\1')
+      diff.a_path.sub(Regexp.new("^#{commit.page.id}/(.*)"), '\1')
     end
 
-    # What happened?
+    # What happened (in a very general sense)?
     def status
       created? ? 'created' : deleted? ? 'deleted' : 'updated'
     end
@@ -27,17 +32,13 @@ module Gaucho
     # methods.
     def created?; diff.new_file; end
     def deleted?; diff.deleted_file; end
+    def updated?; !created? && !deleted?; end
     def data; diff.diff; end
 
-    # Return a Gaucho::Diff instance if the diff in question is relevant to
-    # the current page, otherwise nil.
-    def self.diff(page, diff)
-      self.new(page, diff) if diff.a_path.start_with? File.join(page.id, '')
-    end
-
-    # Get an array of Gaucho::Diff instances.
-    def self.diffs(page, diffs)
-      diffs.collect {|diff| self.diff(page, diff)}.compact
+    # Test whether or not the specified Grit::Diff is relevant to the
+    # specified Gaucho::Page.
+    def self.is_diff_relevant(diff, page)
+      diff.a_path.start_with? File.join(page.id, '')
     end
   end
 end

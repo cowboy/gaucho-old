@@ -3,10 +3,11 @@
 
 Recent content:
 %ul#all_content
-  - @pages[0..5].each do |p|
+  - @pages.each do |p|
     %li
       %a{ href: p.url }= p.title
       %div= p.subtitle
+      -#%div= p.commit.id
       %div
         categories:
         - p.categories.each do |cat|

@@ -7,25 +7,6 @@ module Gaucho
     end
   end
 
-  # I'm lazy, and my data likes to be lazy too.
-  class Later < SimpleDelegator
-    def initialize(*args, &block)
-      @args = args
-      @block = block
-    end
-
-    def __getobj__
-      unless @lookedup
-        __setobj__ @block.call(*@args)
-        @lookedup = true
-      end
-      super
-    end
-  end
-
-  # Because Gaucho::CommitLater.new is nicer than Gaucho::Later.new.
-  class CommitLater < Later; end
-
   # More friendly looking dot-syntax access for hash keys.
   # http://mjijackson.com/2010/02/flexible-ruby-config-objects
   class Config
@@ -59,7 +40,7 @@ module Gaucho
     end
 
     def respond_to?(name)
-      self[name] != nil
+      @data.has_key?(name)
     end
 
     def inspect

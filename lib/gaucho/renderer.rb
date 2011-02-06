@@ -66,6 +66,8 @@ module Gaucho
       code = if o.no_highlight
         text(o)
       else
+        #require 'coderay'
+        #CodeRay.scan(o.data, lang).div(:line_numbers => :table)
         Pygments.highlight(o.data, lang, :html, noclasses: true, linenos: :table)
       end
       %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
@@ -75,7 +77,11 @@ module Gaucho
     #
     # <img src="{{ image.jpg | url }}">
     def self.url(o)
-      "#{o.page.url_at_commit}/#{o.name}"
+      if o.page.shown_local_mods?
+        "#{o.page.url}/#{o.name}"
+      else
+        "#{o.page.commit.url}/#{o.name}"
+      end
     end
 
     # Embed an asset script.
@@ -139,7 +145,7 @@ module Gaucho
       name = page.meta.index_name if name.nil?
       filter = filter_from_name(name) if filter.nil?
       #p [name, filter, arg, data.class, data.valid_encoding?]
-      
+
       if data.valid_encoding? && data =~ /\{\{/
         # Process all {{ ... }} substrings.
         data.gsub!(/\{\{\s*(.*?)\s*\}\}/) do |match|

@@ -5,12 +5,12 @@
   .diff del, .diff ins{display:block;text-decoration:none;}
   .diff li{padding:0; display:table-row;margin: 0;height:1em;}
   .diff li.ins{background:#dfd}
-  .diff li.del{background:#fee}
+  .diff li.del{background:#fdd}
   .diff li:hover{background:#ffc}
   /* try 'whitespace:pre;' if you don't want lines to wrap */
   .diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
-  .diff del strong{font-weight:normal;background:#fcc;}
-  .diff ins strong{font-weight:normal;background:#9f9;}
+  .diff del strong{font-weight:normal;background:#faa;}
+  .diff ins strong{font-weight:normal;background:#afa;}
   </style>
 
 %a{ href: '/' } &laquo; Index
@@ -19,13 +19,13 @@
 
 %p Last updated on #{date_format(@commits.last.committed_date)}
 
-- if @page.has_local_mods
+- if @page.has_local_mods?
   %p
     %em
       Note:
-      - if @page.show_local_mods
+      - if @page.shown_local_mods?
         Showing local modifications. View the
-        %a{ href: @page.url_at_commit(@commits.last) } most recent commit
+        %a{ href: @commits.last.url } most recent commit
         instead.
       - else
         This page has
@@ -58,7 +58,7 @@
 %ul#revisions
   - @commits.reverse.each do |c|
     %li{ class: c.shown? && 'shown', id: "commit-#{c.short_sha}" }
-      %a{ href: @page.url_at_commit(c) }
+      %a{ href: c.url }
         %span.date= date_format(c.committed_date)
         \-
         %span.message= c.message
@@ -67,7 +67,7 @@
         %ul.diffs
           - c.diffs.each do |d|
             - link = capture_haml do
-              %a{ href: "#{@page.url_at_commit(c)}/#{d.file}" } #{d.file}
+              %a{ href: d.url } #{d.file}
             %li{ class: d.status }
               %span.title #{link} #{d.status}
               ~ render_diff(d) unless d.deleted?
