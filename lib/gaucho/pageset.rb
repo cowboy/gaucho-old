@@ -1,28 +1,33 @@
 # A wrapper for Grit::Repo
 module Gaucho
   # TODO: BETTER ERRORS
-  # TODO: HANDLE SUBDIR ("Pages" class maybe)
-  class Repo
-    attr_reader :repo_path, :repo, :tree
-    attr_accessor :default_branch, :subdir
+  class PageSet
+    attr_reader :repo_path, :repo, :tree, :subdir
+    attr_accessor :default_branch
 
     def initialize(repo_path, options = {})
       @repo_path = repo_path
       @repo = Grit::Repo.new(repo_path)
-      @tree = @repo.tree
 
       # Initialize from options, overriding these defaults.
-      {
-        default_branch: 'master', # TODO: MAKE THIS WORK
-        #subdir: 'content'
-      }.merge(options).each {|key, value| self.send("#{key}=".to_sym, value)}
+      { default_branch: 'master', # TODO: MAKE THIS WORK
+        subdir: nil
+      }.merge(options).each do |key, value|
+        instance_variable_set("@#{key}".to_sym, value)
+      end
+
+      @tree = if subdir.nil?
+        repo.tree
+      else
+        repo.tree/subdir
+      end
 
       build_commit_index
     end
 
     # Pretty inspection.
     def inspect
-      %Q{#<Gaucho::Repo "#{repo_path}">}
+      %Q{#<Gaucho::PageSet "#{abs_subdir_path}">}
     end
 
     # Get a specific page. This will create a new Page instance if one doesn't
@@ -39,6 +44,24 @@ module Gaucho
       build_page
       @pages.each {|page| page.shown = nil} if reset_shown
       @pages
+    end
+
+    # Relative (to repo root) filesystem path for all Pages in this PageSet.
+    def subdir_path
+      if @subdir.nil?
+        ''
+      else
+        File.join(@subdir, '')
+      end
+    end
+
+    # Absolute filesystem path for all Pages in this PageSet.
+    def abs_subdir_path
+      if subdir
+        File.join(repo_path, subdir)
+      else
+        repo_path
+      end
     end
 
     # Sort commits. TODO: REMOVE?
@@ -74,9 +97,10 @@ module Gaucho
             added = false
           elsif !added
             added = true
-            line =~ %r{^(.*?)/} # TODO: HANDLE SUBDIR??
-            @commits_by_page[$1] ||= []
-            @commits_by_page[$1] << current_id
+            if line =~ %r{^#{subdir_path}(.*?)/}
+              @commits_by_page[$1] ||= []
+              @commits_by_page[$1] << current_id
+            end
           end
         end
       end

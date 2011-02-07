@@ -14,7 +14,7 @@ include Rack::Utils
 
 # Gaucho stuff.
 require 'gaucho/util'
-require 'gaucho/repo'
+require 'gaucho/pageset'
 require 'gaucho/page'
 require 'gaucho/renderer'
 require 'gaucho/commit'

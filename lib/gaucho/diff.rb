@@ -20,7 +20,7 @@ module Gaucho
 
     # Filename for this Diff.
     def file
-      diff.a_path.sub(Regexp.new("^#{commit.page.id}/(.*)"), '\1')
+      diff.a_path[%r{^#{commit.page.page_path}/(.*)}, 1]
     end
 
     # What happened (in a very general sense)?
@@ -38,7 +38,7 @@ module Gaucho
     # Test whether or not the specified Grit::Diff is relevant to the
     # specified Gaucho::Page.
     def self.is_diff_relevant(diff, page)
-      diff.a_path.start_with? File.join(page.id, '')
+      diff.a_path.start_with? page.page_path
     end
   end
 end

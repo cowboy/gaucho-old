@@ -3,11 +3,11 @@ module Gaucho
   class Commit
     include ShortSha
 
-    attr_reader :page, :repo
+    attr_reader :page, :pageset
 
     def initialize(page, commit_id)
       @page = page
-      @repo = page.repo
+      @pageset = page.pageset
       @commit_id = commit_id
     end
 
@@ -55,12 +55,16 @@ module Gaucho
 
     # The underlying Grit::Commit instance for this Commit.
     def commit
-      @commit ||= repo.commit(@commit_id)
+      @commit ||= pageset.commit(@commit_id)
     end
 
     # The Grit::Tree instance representing the Page at this Commit.
     def tree
-      @tree ||= commit.tree/page.id
+      @tree ||= if pageset.subdir
+        commit.tree/pageset.subdir/page.id
+      else
+        commit.tree/page.id
+      end
     end
 
     # All the diffs for this Commit relevant to the Page.
@@ -94,11 +98,11 @@ module Gaucho
         files = {}
 
         # Parse the raw output from git ls-tree.
-        text = repo.git.native(:ls_tree, {:r => true, :t => true}, @commit_id, page.id)
+        text = pageset.git.native(:ls_tree, {:r => true, :t => true}, @commit_id, page.page_path)
         text.split("\n").each do |line|
-          thing = repo.tree.content_from_string(repo.repo, line)
+          thing = pageset.tree.content_from_string(pageset.repo, line)
           if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
-            if thing.name =~ Regexp.new("^#{page.id}/(.*)")
+            if thing.name =~ Regexp.new("^#{page.page_path}/(.*)")
               files[$1] = thing.data
             end
           end

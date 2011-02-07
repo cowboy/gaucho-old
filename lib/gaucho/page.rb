@@ -2,12 +2,12 @@ module Gaucho
   class Page
     include ShortSha
 
-    attr_reader :repo, :id, :tree, :commits, :commit, :shown
+    attr_reader :pageset, :id, :tree, :commits, :commit, :shown
 
-    def initialize(repo, id, commit_ids)
-      @repo = repo
+    def initialize(pageset, id, commit_ids)
+      @pageset = pageset
       @id = id
-      @tree = repo.tree/id
+      @tree = pageset.tree/id
       @commits = commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
       self.shown = nil
     end
@@ -53,10 +53,9 @@ module Gaucho
     def meta
       if shown_local_mods?
         unless @meta
-          root = File.join(repo.repo_path, id)
           index = Gaucho::Config.new
-          index.name = Dir.entries(root).find {|file| file =~ /^index\./}
-          index.data = IO.read(File.join(root, index.name))
+          index.name = Dir.entries(abs_page_path).find {|file| file =~ /^index\./}
+          index.data = IO.read(File.join(abs_page_path, index.name))
           @meta = self.class.build_metadata(index)
         end
         @meta
@@ -78,6 +77,16 @@ module Gaucho
     # Because page/'foo.txt' looks cooler than page.files['foo.txt'].
     def /(file)
       files[file] or raise Gaucho::FileNotFound.new(file)
+    end
+
+    # Relative (to repo root) filesystem path for this Page.
+    def page_path
+      File.join(pageset.subdir_path, id)
+    end
+    
+    # Absolute filesystem path for this Page.
+    def abs_page_path
+      File.join(pageset.abs_subdir_path, id)
     end
 
     # Enable checking for local modifications. Calling this will also clear the
@@ -139,10 +148,9 @@ module Gaucho
         files = {}
 
         # Iterate over all files, recursively.
-        root = File.join(repo.repo_path, id)
-        Find.find(root) do |path|
+        Find.find(abs_page_path) do |path|
           if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
-            if path =~ Regexp.new("^#{root}/(.*)")
+            if path =~ Regexp.new("^#{abs_page_path}/(.*)")
               files[$1] = IO.read(path)
             end
           end

@@ -35,7 +35,10 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    $repo = Gaucho::Repo.new(File.expand_path('../db/test'))
+    #$pageset = Gaucho::PageSet.new(File.expand_path('../db/test'))
+
+    #$pageset = Gaucho::PageSet.new(File.expand_path('../db/test1'), subdir: 'yay')
+    $pageset = Gaucho::PageSet.new(File.expand_path('../db/test1'), subdir: 'nay')
 
     helpers do
       def date_format(date)
@@ -71,7 +74,7 @@ module Gaucho
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
       pp ['index', params[:captures]]
       #start_time = Time.now
-      @pages = $repo.pages(true)
+      @pages = $pageset.pages(true)
       #pp @pages
       @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
       @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
@@ -84,7 +87,7 @@ module Gaucho
     # /content-tagged-{tag}
     get %r{^/stuff-tagged-([-\w]+)} do |tag|
       pp ['tag', params[:captures]]
-      @pages = $repo.pages(true)
+      @pages = $pageset.pages(true)
       @pages.reject! {|p| p.tags.index(tag).nil?}.sort
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
       @tags = [tag]
@@ -127,8 +130,8 @@ module Gaucho
     get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[-\w]+)(?:/(.+))?$} do |sha, name, file|
       pp ['page', params[:captures]]
 
-      #@page = $cache.get("page-#{name}") {$repo.page(name)}
-      @page = $repo.page(name)
+      #@page = $cache.get("page-#{name}") {$pageset.page(name)}
+      @page = $pageset.page(name)
       @page.check_local_mods
       @page.shown = sha
 
