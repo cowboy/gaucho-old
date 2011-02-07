@@ -1,15 +1,15 @@
-
 require 'grit'
 require 'pp'
 require 'fileutils'
 
-@repo_path = File.expand_path('/Users/cowboy/Sites/benalman.com/new/db/test1')
+@repo_path = File.expand_path('test_repo')
 FileUtils.rm_rf(@repo_path)
 FileUtils.mkdir_p(@repo_path)
 FileUtils.cd(@repo_path)
 `git init .`
 
 @articles = ['gallimaufry', 'haptic', 'lacuna', 'sidereal', 'risible', 'turophile', 'Scotch woodcock', 'scion', 'opprobrium', 'paean', 'brobdignagian', 'abecedarian', 'paronomasia', 'woodnote', 'second banana', 'ben trovato', 'putative', 'algid', 'piste', 'synchronicity', 'factotum', 'festschrift', 'jato unit', 'materteral', 'skepsis', 'micawber', 'jitney', 'retral', 'sobriquet', 'tumid', 'pule', 'meed', 'oscitate', 'oolert', 'sartorial', 'vitiate', 'chiliad', 'aestival', 'sylva', 'stat', 'anomie', 'cheval-de-frise', 'pea-souper', 'autochthon', 'jument', 'lascivious', 'aglet', 'bildungsroman', 'comity', 'devil theory', 'embrocation', 'fug', 'gat', 'hidrosis', 'irenic', 'jeremiad', 'kerf', 'legerity', 'marmoreal', 'naff', 'oikology', 'pessimal', 'quidam', 'recondite', 'sybaritic', 'tyro', 'ullage', 'vigorish', 'writhen', 'xanthochroi', 'yestreen', 'zenana', 'gribble', 'pelf', 'aeneous', 'forb', 'eleemosynary', 'foofaraw', 'lanai', 'shandrydan', 'tardigrade', 'ontic', 'lubricious', 'inchmeal', 'costermonger', 'pilgarlic', 'costard', 'quotidian', 'nystagmus', 'bathos', 'dubiety', 'jactation', 'lubritorium', 'cullion', 'wallydrag', 'literatim', 'flaneur', 'cuesta', 'anodyne', 'weazen', 'brumal', 'estaminet', 'incarnadine', 'gork', 'xanthous', 'yoni', 'demersal', 'anthemion', 'clapperclaw', 'kloof', 'pavid', 'wyvern', 'flannelmouthed', 'chondrule', 'petitio principii', 'kyte', 'pawky', 'katzenjammer', 'catchpenny', 'quincunx', 'Rabelaisian', 'cogent', 'abulia', 'roundheel', 'bruxism', 'kempt', 'aeolian', 'chorine', 'infrangible', 'patzer', 'mistigris', 'misoneism', 'discalceate', 'mimesis', 'pleonasm', 'bezoar', 'volacious', 'demiurgic', 'kakistocracy', 'mell', 'psilanthropy', 'pulchritude', 'embrangle', 'exigent', 'clapter', 'Esperanto', 'wamble', 'maven', 'pulvinar', 'digerati', 'exiguous', 'prolegomenon', 'wapper jaw', 'pridian', 'dirl', 'viviparous', 'brickbat', 'colporteur', 'ditty bag', 'denouement', 'miscegenation', 'vavasor', 'xerosis', 'gunda', 'looby', 'nabob', 'planogram', 'zarf', 'xyloid', 'invidious', 'nugatory', 'decrescent', 'palmy', 'frittle', 'risorial', 'agnail', 'demesne', 'asperse', 'crankle', 'dulcorate', 'chirm', 'blague', 'humbug', 'diapason', 'nares', 'palliate', 'narghile', 'flagitious', 'fizgig', 'troilism', 'bandicoot', 'acid test', 'achilous', 'irpe', 'irredenta', 'balter', 'tripsis', 'gormless', 'anfractuous', 'lulliloo']
+@articles = @articles[0..20] #make things smaller and faster
 
 @all_cats = %w(news projects articles music photography)
 @all_tags = %w(fun awesome cool lame bad sweet great money weak zesty)
@@ -205,7 +205,5 @@ if true
     commit_article(a)
   end
 end
-
-#`git log --pretty=oneline --name-only --parents --reverse --all > .git/file-index`
 
 puts 'done!'

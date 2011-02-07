@@ -1,14 +1,8 @@
 require 'sinatra'
 
-require 'grit'
 require 'haml'
 require 'mime/types'
-require 'delegate'
 require 'diffy'
-
-require 'awesome_print'
-require 'pp'
-require 'profiler'
 
 require '../lib/gaucho'
 
@@ -35,14 +29,8 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    #$pageset = Gaucho::PageSet.new(File.expand_path('../../db/test'))
-
-    #$pageset = Gaucho::PageSet.new(File.expand_path('../../db/test1'), subdir: 'yay')
-    $pageset = Gaucho::PageSet.new(File.expand_path('../../db/test1'), subdir: 'nay')
-    p $pageset
-    p $pageset.length
-    p $pageset.first
-    p $pageset.last
+    #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'yay')
+    $pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
 
     helpers do
       def date_format(date)
@@ -76,7 +64,7 @@ module Gaucho
 
     # INDEX
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
-      pp ['index', params[:captures]]
+      p ['index', params[:captures]]
       #start_time = Time.now
       @pages = $pageset.reset_shown
       @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
@@ -89,7 +77,7 @@ module Gaucho
     # TAGS
     # /content-tagged-{tag}
     get %r{^/stuff-tagged-([-\w]+)} do |tag|
-      pp ['tag', params[:captures]]
+      p ['tag', params[:captures]]
       @pages = $pageset.reset_shown
       @pages.reject! {|p| p.tags.index(tag).nil?}.sort
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
@@ -101,9 +89,9 @@ module Gaucho
     # RECENT CHANGES
     # /recent-changes
     get '/recent-changes' do
-      pp ['recent-changes']
+      p ['recent-changes']
       @pages = $all_pages
-      @pages.each {|p| pp p.commits.last.message}
+      @pages.each {|page| p page.commits.last.message}
       @tags = []
       @cats = []
       haml :index
@@ -114,7 +102,7 @@ module Gaucho
     # /{YYYY}/{MM}
     # /{YYYY}/{MM}/{DD}
     get %r{^/(\d{4})(?:/(\d{2}))?(?:/(\d{2}))?/?$} do |year, month, day|
-      pp ['date', params[:captures]]
+      p ['date', params[:captures]]
       @pages = $all_pages.select {|page| page.date?([year, month, day].compact)}
       @tags = []
       @cats = []
@@ -131,31 +119,29 @@ module Gaucho
     #   YYYY/MM/name
     #   YYYY/MM/DD/name
     get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[-\w]+)(?:/(.+))?$} do |sha, name, file|
-      pp ['page', params[:captures]]
+      p ['page', params[:captures]]
 
       @page = $pageset[name]
       @page.check_local_mods if development?
       @page.shown = sha
 
-      begin
-        if sha && production?
-          # cache heavily
-        end
-
-        if file
-          content_type File.extname(file) rescue content_type :txt
-          @page/file
-        else
-          @commit = @page.commit
-          @commits = @page.commits
-          @title = @page.title
-          @content = @page.render(@page.content, {no_highlight: true})
-
-          haml(@page.layout || :page)
-        end
-      #rescue
-      #  raise Sinatra::NotFound
+      if sha && production?
+        # cache heavily
       end
+
+      if file
+        content_type File.extname(file) rescue content_type :txt
+        @page/file
+      else
+        @commit = @page.commit
+        @commits = @page.commits
+        @title = @page.title
+        @content = @page.render(@page.content, {no_highlight: true})
+
+        haml(@page.layout || :page)
+      end
+    #rescue
+    #  raise Sinatra::NotFound
     end
   end
 end
