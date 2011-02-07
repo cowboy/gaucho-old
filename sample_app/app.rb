@@ -83,9 +83,25 @@ module Gaucho
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
       @tags = [tag]
       @cats = @pages.collect {|cat| cat.categories}.flatten.uniq.sort
+      @subindex = true
       haml :index
     end
 
+    # CATEGORIES
+    # /{category}
+    get %r{^/([-\w]+)} do |cat|
+      p ['cat', params[:captures]]
+      @pages = $pageset.reset_shown
+      @pages.reject! {|p| p.categories.index(cat).nil?}.sort
+      pass if @pages.empty?
+      @title = %Q{Stuff categorized &ldquo;#{cat}&rdquo;}
+      @tags = @pages.collect {|tag| tag.tags}.flatten.uniq.sort
+      @cats = [cat]
+      @subindex = true
+      haml :index
+    end
+
+=begin
     # RECENT CHANGES
     # /recent-changes
     get '/recent-changes' do
@@ -94,8 +110,10 @@ module Gaucho
       @pages.each {|page| p page.commits.last.message}
       @tags = []
       @cats = []
+      @subindex = true
       haml :index
     end
+=end
 
     # DATE LISTING
     # /{YYYY}
@@ -103,9 +121,12 @@ module Gaucho
     # /{YYYY}/{MM}/{DD}
     get %r{^/(\d{4})(?:/(\d{2}))?(?:/(\d{2}))?/?$} do |year, month, day|
       p ['date', params[:captures]]
-      @pages = $all_pages.select {|page| page.date?([year, month, day].compact)}
+      date_arr = [year, month, day].compact
+      @pages = $pageset.reset_shown.select {|page| page.date?(date_arr)}
+      @title = %Q{Stuff dated &ldquo;#{date_arr.join('-')}&rdquo;}
       @tags = []
       @cats = []
+      @subindex = true
       haml :index
     end
 
@@ -121,27 +142,29 @@ module Gaucho
     get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[-\w]+)(?:/(.+))?$} do |sha, name, file|
       p ['page', params[:captures]]
 
-      @page = $pageset[name]
-      @page.check_local_mods if development?
-      @page.shown = sha
+      begin
+        @page = $pageset[name]
+        @page.check_local_mods if development?
+        @page.shown = sha
 
-      if sha && production?
-        # cache heavily
+        if sha && production?
+          # cache heavily
+        end
+
+        if file
+          content_type File.extname(file) rescue content_type :txt
+          @page/file
+        else
+          @commit = @page.commit
+          @commits = @page.commits
+          @title = @page.title
+          @content = @page.render(@page.content, {no_highlight: true})
+
+          haml(@page.layout || :page)
+        end
+      rescue
+        raise Sinatra::NotFound
       end
-
-      if file
-        content_type File.extname(file) rescue content_type :txt
-        @page/file
-      else
-        @commit = @page.commit
-        @commits = @page.commits
-        @title = @page.title
-        @content = @page.render(@page.content, {no_highlight: true})
-
-        haml(@page.layout || :page)
-      end
-    #rescue
-    #  raise Sinatra::NotFound
     end
   end
 end
