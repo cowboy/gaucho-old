@@ -32,6 +32,12 @@ module Gaucho
       %Q{#<Gaucho::PageSet "#{abs_subdir_path}">}
     end
 
+    # Expose the underlying pages array.
+    def pages
+      build_page
+      @pages
+    end
+
     # Get a specific page. This will create a new Page instance internally if
     # one doesn't already exist.
     def [](page_id)
@@ -44,8 +50,7 @@ module Gaucho
     # don't already exist. This could take a while.
     def each
       if block_given? then
-        build_page
-        @pages.each {|page| yield page}
+        pages.each {|page| yield page}
       else
         to_enum(:each)
       end
@@ -79,9 +84,9 @@ module Gaucho
       shas.sort {|a, b| @commit_order[a].to_i <=> @commit_order[b].to_i}
     end
 
-    # Pass-through all other methods to the underlying repo object.
+    # Pass-through all other methods to the underlying pages Array.
     def method_missing(name, *args)
-      repo.send(name, *args) if repo.respond_to?(name)
+      pages.send(name, *args) if pages.respond_to?(name)
     end
 
     private
@@ -97,7 +102,7 @@ module Gaucho
         added = nil
         idx = 0
 
-        log = git.native(:log, {pretty: 'oneline', name_only: true,
+        log = repo.git.native(:log, {pretty: 'oneline', name_only: true,
           parents: true, reverse: true, timeout: false})
 
         log.split("\n").each do |line|

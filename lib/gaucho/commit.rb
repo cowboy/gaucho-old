@@ -55,7 +55,7 @@ module Gaucho
 
     # The underlying Grit::Commit instance for this Commit.
     def commit
-      @commit ||= pageset.commit(@commit_id)
+      @commit ||= pageset.repo.commit(@commit_id)
     end
 
     # The Grit::Tree instance representing the Page at this Commit.
@@ -98,7 +98,7 @@ module Gaucho
         files = {}
 
         # Parse the raw output from git ls-tree.
-        text = pageset.git.native(:ls_tree, {:r => true, :t => true}, @commit_id, page.page_path)
+        text = pageset.repo.git.native(:ls_tree, {:r => true, :t => true}, @commit_id, page.page_path)
         text.split("\n").each do |line|
           thing = pageset.tree.content_from_string(pageset.repo, line)
           if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')

@@ -10,7 +10,7 @@ require 'awesome_print'
 require 'pp'
 require 'profiler'
 
-require './lib/gaucho'
+require '../lib/gaucho'
 
 # Diffy limitation workaround (the inability to specify an actual diff)
 module Diffy
@@ -35,10 +35,14 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    #$pageset = Gaucho::PageSet.new(File.expand_path('../db/test'))
+    #$pageset = Gaucho::PageSet.new(File.expand_path('../../db/test'))
 
-    #$pageset = Gaucho::PageSet.new(File.expand_path('../db/test1'), subdir: 'yay')
-    $pageset = Gaucho::PageSet.new(File.expand_path('../db/test1'), subdir: 'nay')
+    #$pageset = Gaucho::PageSet.new(File.expand_path('../../db/test1'), subdir: 'yay')
+    $pageset = Gaucho::PageSet.new(File.expand_path('../../db/test1'), subdir: 'nay')
+    p $pageset
+    p $pageset.length
+    p $pageset.first
+    p $pageset.last
 
     helpers do
       def date_format(date)
@@ -57,7 +61,7 @@ module Gaucho
         data = diff.data
         data.force_encoding('utf-8')
         if data.valid_encoding?
-          d = Diffy::Diff.new('','')
+          d = Diffy::Diff.new('', '')
           d.diff = data
           d.to_s(:html)
         else
@@ -129,14 +133,13 @@ module Gaucho
     get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[-\w]+)(?:/(.+))?$} do |sha, name, file|
       pp ['page', params[:captures]]
 
-      #@page = $cache.get("page-#{name}") {$pageset.page(name)}
       @page = $pageset[name]
-      @page.check_local_mods
+      @page.check_local_mods if development?
       @page.shown = sha
 
       begin
-        if sha
-          # cache heavily if in production
+        if sha && production?
+          # cache heavily
         end
 
         if file
