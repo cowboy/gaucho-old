@@ -150,7 +150,7 @@ module Gaucho
         # Iterate over all files, recursively.
         Find.find(abs_page_path) do |path|
           if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
-            if path =~ Regexp.new("^#{abs_page_path}/(.*)")
+            if path =~ %r{^#{abs_page_path}/(.*)}
               files[$1] = IO.read(path)
             end
           end

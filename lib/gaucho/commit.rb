@@ -102,7 +102,7 @@ module Gaucho
         text.split("\n").each do |line|
           thing = pageset.tree.content_from_string(pageset.repo, line)
           if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
-            if thing.name =~ Regexp.new("^#{page.page_path}/(.*)")
+            if thing.name =~ %r{^#{page.page_path}/(.*)}
               files[$1] = thing.data
             end
           end
