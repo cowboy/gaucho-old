@@ -2,6 +2,8 @@
 module Gaucho
   # TODO: BETTER ERRORS
   class PageSet
+    include Enumerable
+
     attr_reader :repo_path, :repo, :tree, :subdir
     attr_accessor :default_branch
 
@@ -30,20 +32,28 @@ module Gaucho
       %Q{#<Gaucho::PageSet "#{abs_subdir_path}">}
     end
 
-    # Get a specific page. This will create a new Page instance if one doesn't
-    # already exist.
-    def page(page_id)
+    # Get a specific page. This will create a new Page instance internally if
+    # one doesn't already exist.
+    def [](page_id)
       page_id.gsub!('/', '-')
       build_page(page_id)
       @pages_by_id[page_id]
     end
 
-    # Get all pages. This will create new Page instances for any that don't
-    # already exist. This could take a while.
-    def pages(reset_shown = false) # TODO: DEFAULT TO TRUE?
-      build_page
-      @pages.each {|page| page.shown = nil} if reset_shown
-      @pages
+    # Get all pages. This will create new Page instances internally for any that
+    # don't already exist. This could take a while.
+    def each
+      if block_given? then
+        build_page
+        @pages.each {|page| yield page}
+      else
+        to_enum(:each)
+      end
+    end
+
+    # Reset all Pages "shown" to their latest commit.
+    def reset_shown
+      each {|page| page.shown = nil}
     end
 
     # Relative (to repo root) filesystem path for all Pages in this PageSet.

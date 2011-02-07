@@ -74,8 +74,7 @@ module Gaucho
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
       pp ['index', params[:captures]]
       #start_time = Time.now
-      @pages = $pageset.pages(true)
-      #pp @pages
+      @pages = $pageset.reset_shown
       @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
       @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
       #@pages = pages_categorized('music')
@@ -87,7 +86,7 @@ module Gaucho
     # /content-tagged-{tag}
     get %r{^/stuff-tagged-([-\w]+)} do |tag|
       pp ['tag', params[:captures]]
-      @pages = $pageset.pages(true)
+      @pages = $pageset.reset_shown
       @pages.reject! {|p| p.tags.index(tag).nil?}.sort
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
       @tags = [tag]
@@ -131,7 +130,7 @@ module Gaucho
       pp ['page', params[:captures]]
 
       #@page = $cache.get("page-#{name}") {$pageset.page(name)}
-      @page = $pageset.page(name)
+      @page = $pageset[name]
       @page.check_local_mods
       @page.shown = sha
 
