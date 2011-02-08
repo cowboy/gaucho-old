@@ -42,9 +42,5 @@ module Gaucho
     def respond_to?(name)
       @data.has_key?(name)
     end
-
-    def inspect
-      @data
-    end
   end
 end

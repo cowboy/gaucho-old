@@ -12,8 +12,7 @@ module Gaucho
       self.shown = nil
     end
 
-    # Pretty inspection.
-    def inspect
+    def to_s
       %Q{#<Gaucho::Page "#{url}" "#{commit.id}">}
     end
 

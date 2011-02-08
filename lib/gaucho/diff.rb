@@ -8,8 +8,7 @@ module Gaucho
       @diff = diff
     end
 
-    # Pretty inspection.
-    def inspect
+    def to_s
       %Q{#<Gaucho::Diff "#{url}" "#{status}">}
     end
 

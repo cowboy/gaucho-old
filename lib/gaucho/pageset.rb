@@ -27,8 +27,7 @@ module Gaucho
       build_commit_index
     end
 
-    # Pretty inspection.
-    def inspect
+    def to_s
       %Q{#<Gaucho::PageSet "#{abs_subdir_path}">}
     end
 

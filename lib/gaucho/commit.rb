@@ -11,8 +11,7 @@ module Gaucho
       @commit_id = commit_id
     end
 
-    # Pretty inspection.
-    def inspect
+    def to_s
       s = shown? ? '*' : ''
       %Q{#<Gaucho::Commit#{s} "#{url}" "#{committed_date}" "#{short_message}">}
     end
