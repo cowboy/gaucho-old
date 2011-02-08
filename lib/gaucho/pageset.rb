@@ -88,54 +88,54 @@ module Gaucho
       pages.send(name, *args) if pages.respond_to?(name)
     end
 
-    private
+    protected
 
-      # Build commit index for this repo.
-      def build_commit_index
-        return if @commits_by_page
+    # Build commit index for this repo.
+    def build_commit_index
+      return if @commits_by_page
 
-        @commit_order = {}
-        @commits_by_page = {}
+      @commit_order = {}
+      @commits_by_page = {}
 
-        current_id = nil
-        added = nil
-        idx = 0
+      current_id = nil
+      added = nil
+      idx = 0
 
-        log = repo.git.native(:log, {pretty: 'oneline', name_only: true,
-          parents: true, reverse: true, timeout: false})
+      log = repo.git.native(:log, {pretty: 'oneline', name_only: true,
+        parents: true, reverse: true, timeout: false})
 
-        log.split("\n").each do |line|
-          if line =~ /^([0-9a-f]{40})/
-            current_id = $1
-            @commit_order[current_id] = idx += 1
-            added = false
-          elsif !added
-            added = true
-            if line =~ %r{^#{subdir_path}(.*?)/}
-              @commits_by_page[$1] ||= []
-              @commits_by_page[$1] << current_id
-            end
+      log.split("\n").each do |line|
+        if line =~ /^([0-9a-f]{40})/
+          current_id = $1
+          @commit_order[current_id] = idx += 1
+          added = false
+        elsif !added
+          added = true
+          if line =~ %r{^#{subdir_path}(.*?)/}
+            @commits_by_page[$1] ||= []
+            @commits_by_page[$1] << current_id
           end
         end
       end
+    end
 
-      # Build page index for this repo. If nil is passed, build all pages,
-      # otherwise build the specified page(s).
-      def build_page(page_ids = nil)
-        @pages_by_id ||= {}
+    # Build page index for this repo. If nil is passed, build all pages,
+    # otherwise build the specified page(s).
+    def build_page(page_ids = nil)
+      @pages_by_id ||= {}
 
-        if page_ids.nil?
-          page_ids = []
-          @commits_by_page.each {|page_id, commits| page_ids << page_id}
-        end
-
-        [*page_ids].each do |page_id|
-          @pages_by_id[page_id] ||= Gaucho::Page.new(self, page_id, @commits_by_page[page_id])
-        end
-
-        @pages = []
-        @pages_by_id.each {|page_id, page| @pages << page}
-        @pages.sort!
+      if page_ids.nil?
+        page_ids = []
+        @commits_by_page.each {|page_id, commits| page_ids << page_id}
       end
+
+      [*page_ids].each do |page_id|
+        @pages_by_id[page_id] ||= Gaucho::Page.new(self, page_id, @commits_by_page[page_id])
+      end
+
+      @pages = []
+      @pages_by_id.each {|page_id, page| @pages << page}
+      @pages.sort!
+    end
   end
 end

@@ -81,33 +81,33 @@ module Gaucho
       commit.send(name, *args) if commit.respond_to?(name)
     end
 
-    private
+    protected
 
-      # Build an array of Gaucho::Diff instances that are relevant to the
-      # Page. at this Commit.
-      def build_diffs
-        diffs = commit.show.collect do |diff|
-          Gaucho::Diff.new(self, diff) if Gaucho::Diff.is_diff_relevant(diff, page)
-        end
-        diffs.compact
+    # Build an array of Gaucho::Diff instances that are relevant to the
+    # Page. at this Commit.
+    def build_diffs
+      diffs = commit.show.collect do |diff|
+        Gaucho::Diff.new(self, diff) if Gaucho::Diff.is_diff_relevant(diff, page)
       end
+      diffs.compact
+    end
 
-      # Build "file" (Grit::Blob) index for the Page at this Commit.
-      def build_file_index
-        files = {}
+    # Build "file" (Grit::Blob) index for the Page at this Commit.
+    def build_file_index
+      files = {}
 
-        # Parse the raw output from git ls-tree.
-        text = pageset.repo.git.native(:ls_tree, {:r => true, :t => true}, @commit_id, page.page_path)
-        text.split("\n").each do |line|
-          thing = pageset.tree.content_from_string(pageset.repo, line)
-          if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
-            if thing.name =~ %r{^#{page.page_path}/(.*)}
-              files[$1] = thing.data
-            end
+      # Parse the raw output from git ls-tree.
+      text = pageset.repo.git.native(:ls_tree, {:r => true, :t => true}, @commit_id, page.page_path)
+      text.split("\n").each do |line|
+        thing = pageset.tree.content_from_string(pageset.repo, line)
+        if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
+          if thing.name =~ %r{^#{page.page_path}/(.*)}
+            files[$1] = thing.data
           end
         end
-        
-        files
       end
+      
+      files
+    end
   end
 end

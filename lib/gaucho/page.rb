@@ -140,22 +140,22 @@ module Gaucho
       meta
     end
 
-    private
+    protected
 
-      # Build page file index from filesystem.
-      def build_file_index
-        files = {}
+    # Build page file index from filesystem.
+    def build_file_index
+      files = {}
 
-        # Iterate over all files, recursively.
-        Find.find(abs_page_path) do |path|
-          if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
-            if path =~ %r{^#{abs_page_path}/(.*)}
-              files[$1] = IO.read(path)
-            end
+      # Iterate over all files, recursively.
+      Find.find(abs_page_path) do |path|
+        if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
+          if path =~ %r{^#{abs_page_path}/(.*)}
+            files[$1] = IO.read(path)
           end
         end
-
-        files
       end
+
+      files
+    end
   end
 end
