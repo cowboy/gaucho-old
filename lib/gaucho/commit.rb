@@ -2,8 +2,13 @@
 module Gaucho
   class Commit
     include ShortSha
+    extend Forwardable
 
     attr_reader :page, :pageset
+    
+    # Forward Commit methods to @commit (via the commit method) so that this
+    # class feels as Grit::Commit-like as possible.
+    def_delegators :commit, *Grit::Commit.public_instance_methods(false)
 
     def initialize(page, commit_id)
       @page = page
@@ -76,11 +81,6 @@ module Gaucho
       @files ||= build_file_index
     end
     
-    # Pass-through all other methods to the underlying Grit::Commit instance.
-    def method_missing(name, *args)
-      commit.send(name, *args) if commit.respond_to?(name)
-    end
-
     protected
 
     # Build an array of Gaucho::Diff instances that are relevant to the

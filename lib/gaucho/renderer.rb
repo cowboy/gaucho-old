@@ -176,7 +176,7 @@ module Gaucho
 
       # If a filter exists to handle this request, use it, otherwise error.
       if respond_to?(filter)
-        send(filter, filter_metadata(page, data, options, name, arg))
+        public_send(filter, filter_metadata(page, data, options, name, arg))
       else
         invalid_filter(filter, name)
       end

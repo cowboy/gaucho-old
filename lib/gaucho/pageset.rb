@@ -3,9 +3,14 @@ module Gaucho
   # TODO: BETTER ERRORS
   class PageSet
     include Enumerable
+    extend Forwardable
 
     attr_reader :repo_path, :repo, :tree, :subdir
     attr_accessor :default_branch
+
+    # Forward Array methods to @pages (via the pages method) so that the PageSet
+    # can feel as Array-like as possible.
+    def_delegators :pages, *Array.public_instance_methods(false)
 
     def initialize(repo_path, options = {})
       @repo_path = repo_path
@@ -81,11 +86,6 @@ module Gaucho
     # Sort commits. TODO: REMOVE?
     def sort_commits(shas)
       shas.sort {|a, b| @commit_order[a].to_i <=> @commit_order[b].to_i}
-    end
-
-    # Pass-through all other methods to the underlying pages Array.
-    def method_missing(name, *args)
-      pages.send(name, *args) if pages.respond_to?(name)
     end
 
     protected

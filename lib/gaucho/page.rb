@@ -117,8 +117,8 @@ module Gaucho
     end
 
     # Pass-through all other methods to the underlying metadata object.
-    def method_missing(name, *args)
-      meta.send(name, *args) if meta.respond_to?(name)
+    def method_missing(*args)
+      meta.public_send(*args)
     end
 
     # Parse metadata and content from a Page index file.
