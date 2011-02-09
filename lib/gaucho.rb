@@ -10,7 +10,7 @@ require 'forwardable'
 
 # For the renderer.
 require 'rdiscount'
-require 'rb-pygments'
+require 'coderay'
 # For the renderer's escape_html helper.
 require 'rack'
 include Rack::Utils

@@ -66,12 +66,7 @@ module Gaucho
     # {{ example.js | code }}
     def self.code(o)
       return invalid_encoding(o.name) unless o.data.valid_encoding?
-      lang ||= File.extname(o.name)[1..-1]
-      code = if o.no_highlight
-        text(o)
-      else
-        Pygments.highlight(o.data, lang, :html, linenos: :table)
-      end
+      code = CodeRay.scan(o.data, File.extname(o.name)[1..-1]).div(:line_numbers => :table)
       %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
 

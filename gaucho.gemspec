@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'grit', '>= 2.4.1'
   s.add_dependency 'haml', '>= 3.0.25'
   s.add_dependency 'rdiscount', '>= 1.6.5'
-  s.add_dependency 'rb-pygments', '>= 0.1.0'
+  s.add_dependency 'coderay', '>= 0.9.7'
   s.add_dependency 'rack', '>= 1.2.1'
 
   s.add_development_dependency 'shoulda', '>= 0'

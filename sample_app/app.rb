@@ -15,6 +15,14 @@ module Diffy
 end
 
 module Gaucho
+  module RendererX
+    def self.code(o)
+      return invalid_encoding(o.name) unless o.data.valid_encoding?
+      code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html, linenos: :table)
+      %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
+    end
+  end
+
   class PageNotFound < Sinatra::NotFound
   end
 
