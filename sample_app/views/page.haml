@@ -1,5 +1,7 @@
 :plain
   <style>
+  img { vertical-align: top; }
+  
   .diff {overflow:auto;}
   .diff ul{color:#000;background:#fff;overflow:auto;font-size:13px;list-style:none;margin:0;padding:0;display:table;width:100%;}
   .diff del, .diff ins{display:block;text-decoration:none;}
@@ -11,13 +13,20 @@
   .diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
   .diff del strong{font-weight:normal;background:#faa;}
   .diff ins strong{font-weight:normal;background:#afa;}
+  
+  #{Pygments.style(:monokai, :html)}
+  .highlighttable { background: #000; border-collapse: collapse; }
+  .highlighttable .linenos { color: #aaa; background: #444; }
+  .highlighttable td { border: 1px solid #444; padding: 2px 4px; }
+  .highlighttable .code { padding: 2px 6px; }
+  .highlighttable pre { margin: 0; }
   </style>
 
 %a{ href: '/' } &laquo; Index
 
 %h1= @title
 
-%p Last updated on #{date_format(@commits.last.committed_date)}
+%p Last updated on #{date_format(@commits.last.date)}
 
 - if @page.has_local_mods?
   %p
@@ -38,7 +47,7 @@
       The content you are viewing is out of date. View the
       %a{ href: @page.url } most recent revision.
       -#was updated on
-      -#%a{ href: "#commit-#{c.short_sha}" } #{date_format(c.committed_date)}.
+      -#%a{ href: "#commit-#{c.short_sha}" } #{date_format(c.date)}.
 
 ~ @content
 
@@ -59,9 +68,14 @@
   - @commits.reverse.each do |c|
     %li{ class: c.shown? && 'shown', id: "commit-#{c.short_sha}" }
       %a{ href: c.url }
-        %span.date= date_format(c.committed_date)
+        %span.date= date_format(c.date)
         \-
         %span.message= c.message
+      = surround '(', ')' do
+        - if c.author.email
+          %a{ href: "mailto:#{c.author.email}" }= c.author.name
+        - else
+          = c.author.name
       -#%span.author= c.committer
       - if true
         %ul.diffs

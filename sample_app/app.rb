@@ -3,6 +3,7 @@ require 'sinatra'
 require 'haml'
 require 'mime/types'
 require 'diffy'
+require 'rb-pygments'
 
 require '../lib/gaucho'
 
@@ -30,7 +31,24 @@ module Gaucho
     set :haml, format: :html5, attr_wrapper: '"'
 
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'yay')
-    $pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
+    #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
+    $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'))
+=begin
+    p $pageset.first.commit.diffs
+    p $pageset.first.files
+    p $pageset.subdir_path
+    p $pageset.abs_subdir_path
+    p $pageset.tree
+    p $pageset.last
+    p $pageset.length
+    c = $pageset.first.commit
+    p c.author.name
+    p c.author.email
+    p c.authored_date
+    p c.committer.name
+    p c.committer.email
+    p c.committed_date
+=end
 
     helpers do
       def date_format(date)
@@ -154,12 +172,12 @@ module Gaucho
           @commit = @page.commit
           @commits = @page.commits
           @title = @page.title
-          @content = @page.render(@page.content, {no_highlight: true})
+          @content = @page.render(@page.content) #, {no_highlight: true})
 
           haml(@page.layout || :page)
         end
-      rescue
-        raise Sinatra::NotFound
+      #rescue
+      #  raise Sinatra::NotFound
       end
     end
   end
