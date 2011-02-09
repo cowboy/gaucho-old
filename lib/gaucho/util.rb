@@ -16,18 +16,18 @@ module Gaucho
     end
 
     def update!(data)
-      data.each {|key, value| self[key] = value}
+      data.each {|key, value| self[key.downcase] = value}
     end
 
     def [](key)
-      @data[key.to_sym]
+      @data[key.downcase.to_sym]
     end
 
     def []=(key, value)
-      if value.class == Hash
-        @data[key.to_sym] = self.class.new(value)
+      @data[key.downcase.to_sym] = if value.class == Hash
+        self.class.new(value)
       else
-        @data[key.to_sym] = value
+        value
       end
     end
 
