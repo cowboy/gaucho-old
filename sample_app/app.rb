@@ -105,7 +105,7 @@ module Gaucho
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
       @tags = [tag]
       @cats = @pages.collect {|cat| cat.categories}.flatten.uniq.sort
-      @subindex = true
+      @index_back = true
       haml :index
     end
 
@@ -119,7 +119,7 @@ module Gaucho
       @title = %Q{Stuff categorized &ldquo;#{cat}&rdquo;}
       @tags = @pages.collect {|tag| tag.tags}.flatten.uniq.sort
       @cats = [cat]
-      @subindex = true
+      @index_back = true
       haml :index
     end
 
@@ -132,7 +132,7 @@ module Gaucho
       @pages.each {|page| p page.commits.last.message}
       @tags = []
       @cats = []
-      @subindex = true
+      @index_back = true
       haml :index
     end
 =end
@@ -148,7 +148,7 @@ module Gaucho
       @title = %Q{Stuff dated &ldquo;#{date_arr.join('-')}&rdquo;}
       @tags = []
       @cats = []
-      @subindex = true
+      @index_back = true
       haml :index
     end
 
@@ -181,7 +181,7 @@ module Gaucho
           @commits = @page.commits
           @title = @page.title
           @content = @page.render(@page.content) #, {no_highlight: true})
-
+          @index_back = true
           haml(@page.layout || :page)
         end
       #rescue
