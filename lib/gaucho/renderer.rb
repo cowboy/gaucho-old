@@ -70,9 +70,7 @@ module Gaucho
       code = if o.no_highlight
         text(o)
       else
-        #require 'coderay'
-        #CodeRay.scan(o.data, lang).div(:line_numbers => :table)
-        Pygments.highlight(o.data, lang, :html, noclasses: true, linenos: :table)
+        Pygments.highlight(o.data, lang, :html, linenos: :table)
       end
       %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
