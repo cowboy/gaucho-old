@@ -73,7 +73,7 @@ EOF
 ]
 
 @page_subdirs = ['yay/', 'nay/']
-@file_subdirs = ['', 'a/', 'b/', 'a/c/']
+@file_subdirs = ['', 'zing/', 'zang/', 'zing/zong/']
 
 @paths = {}
 
@@ -159,7 +159,7 @@ def create_article(title)
   meta['Author'] = author unless author.nil?
   docs << <<-EOF
 
-This is a sample article about [#{title}](/#{path}#custom-hash) by [C{{ #{incl} }}WB{{ #{incl} }}Y]({{ #{incl} | url }}).
+This is a sample article about [#{title}](/#{path}#arbitrary-hash) by [C{{ #{incl} }}WB{{ #{incl} }}Y]({{ #{incl} | url }}).
 #{@all_more_toc.shift_rotate(1)[0]}
   EOF
   docs
