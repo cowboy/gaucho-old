@@ -80,7 +80,11 @@ module Gaucho
 
     # Relative (to repo root) filesystem path for this Page.
     def page_path
-      File.join(pageset.subdir_path, id)
+      if pageset.subdir_path != ''
+        File.join(pageset.subdir_path, id)
+      else
+        id
+      end
     end
     
     # Absolute filesystem path for this Page.
