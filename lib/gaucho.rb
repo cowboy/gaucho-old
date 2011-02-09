@@ -5,6 +5,7 @@ $:.unshift File.dirname(__FILE__)
 require 'grit'
 require 'yaml'
 require 'find'
+require 'date'
 require 'forwardable'
 
 # For the renderer.

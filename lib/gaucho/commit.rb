@@ -57,6 +57,24 @@ module Gaucho
       files[file] or raise Gaucho::FileNotFound.new(file)
     end
 
+    # The author of this Commit. A specified metadata "author" will be used
+    # first, with a fallback to the actual Grit::Commit committer (Grit::Actor).
+    def author
+      if meta.author.nil?
+        commit.committer
+      else
+        Grit::Actor.from_string(meta.author)
+      end
+    end
+
+    # The date of this Commit. A specified metadata "date" will be used first,
+    # with a fallback to the actual Grit::Commit committed_date.
+    def date
+      DateTime.parse(meta.date)
+    rescue
+      commit.committed_date
+    end
+
     # The underlying Grit::Commit instance for this Commit.
     def commit
       @commit ||= pageset.repo.commit(@commit_id)
