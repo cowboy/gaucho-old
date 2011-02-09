@@ -86,7 +86,7 @@ module Gaucho
         id
       end
     end
-    
+
     # Absolute filesystem path for this Page.
     def abs_page_path
       File.join(pageset.abs_subdir_path, id)
@@ -154,7 +154,10 @@ module Gaucho
       Find.find(abs_page_path) do |path|
         if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
           if path =~ %r{^#{abs_page_path}/(.*)}
-            files[$1] = IO.read(path)
+            contents = IO.read(path)
+            # Is there a better way to handle encoding for binary files?
+            contents.force_encoding('BINARY') unless contents.valid_encoding?
+            files[$1] = contents
           end
         end
       end
