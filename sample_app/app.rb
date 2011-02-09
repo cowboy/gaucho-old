@@ -46,14 +46,10 @@ module Gaucho
       end
       # Render diffs for page revision history.
       def render_diff(diff)
-        data = diff.data
-        data.force_encoding('utf-8')
-        if data.valid_encoding?
+        unless diff.binary?
           d = Diffy::Diff.new('', '')
-          d.diff = data
+          d.diff = diff.data
           d.to_s(:html)
-        else
-          'Binary data' # TODO: CHANGE?
         end
       end
     end

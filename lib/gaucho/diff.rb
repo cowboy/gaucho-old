@@ -32,6 +32,7 @@ module Gaucho
     def created?; diff.new_file; end
     def deleted?; diff.deleted_file; end
     def updated?; !created? && !deleted?; end
+    def binary?; diff.diff.start_with? 'Binary files'; end
     def data; diff.diff; end
 
     # Test whether or not the specified Grit::Diff is relevant to the

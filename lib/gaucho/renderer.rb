@@ -40,6 +40,7 @@ module Gaucho
     #
     # {{ content.html | html }}
     def self.html(o)
+      return invalid_encoding(o.name) unless o.data.valid_encoding?
       o.data
     end
 
@@ -48,6 +49,7 @@ module Gaucho
     # {{ content.txt | text }}
     # {{ content.txt | text(class="awesome-pre") }}
     def self.text(o)
+      return invalid_encoding(o.name) unless o.data.valid_encoding?
       %Q{<pre#{o.attrs}>#{escape(o)}</pre>}
     end
 
@@ -55,6 +57,7 @@ module Gaucho
     #
     # {{ content.html | escape }}
     def self.escape(o)
+      return invalid_encoding(o.name) unless o.data.valid_encoding?
       escape_html(o.data)
     end
 
@@ -62,6 +65,7 @@ module Gaucho
     #
     # {{ example.js | code }}
     def self.code(o)
+      return invalid_encoding(o.name) unless o.data.valid_encoding?
       lang ||= File.extname(o.name)[1..-1]
       code = if o.no_highlight
         text(o)
@@ -213,6 +217,11 @@ module Gaucho
 
       t = filter_map.find {|kv| kv[1].find {|i| i == type}}
       t.nil? ? type : t[0]
+    end
+
+    # Handle invalid encoding (binary?) in a helpful way.
+    def self.invalid_encoding(file)
+      %Q{<b style="color:red">Invalid encoding: #{file}</b>}
     end
 
     # Handle invalid files in a helpful way.
