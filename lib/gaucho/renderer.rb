@@ -66,7 +66,8 @@ module Gaucho
     # {{ example.js | code }}
     def self.code(o)
       return invalid_encoding(o.name) unless o.data.valid_encoding?
-      code = CodeRay.scan(o.data, File.extname(o.name)[1..-1]).div(:line_numbers => :table)
+      lang = CodeRay::FileType.fetch(o.name)
+      code = CodeRay.scan(o.data, lang).div(:line_numbers => :table)
       %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
 

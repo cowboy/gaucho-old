@@ -10,7 +10,9 @@ require 'forwardable'
 
 # For the renderer.
 require 'rdiscount'
+# Syntax highlighting.
 require 'coderay'
+require 'coderay/helpers/file_type'
 # For the renderer's escape_html helper.
 require 'rack'
 include Rack::Utils
