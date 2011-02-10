@@ -2,6 +2,7 @@
 module Gaucho
   class Commit
     include ShortSha
+    include FixEncoding
     extend Forwardable
 
     attr_reader :page, :pageset
@@ -77,11 +78,12 @@ module Gaucho
 
     # The underlying Grit::Commit instance for this Commit.
     def commit
-      unless @commit
-        @commit = pageset.repo.commit(@commit_id)
-        @commit.message.force_encoding('utf-8')
-      end
-      @commit
+      @commit ||= pageset.repo.commit(@commit_id)
+    end
+
+    # The Grit::Commit message, with its encoding "fixed."
+    def message
+      fix_encoding(commit.message)
     end
 
     # The Grit::Tree instance representing the Page at this Commit.
@@ -124,7 +126,7 @@ module Gaucho
         thing = pageset.tree.content_from_string(pageset.repo, line)
         if thing.kind_of?(Grit::Blob) && !File.basename(thing.name).start_with?('.')
           if thing.name =~ %r{^#{page.page_path}/(.*)}
-            files[$1] = thing.data
+            files[$1] = fix_encoding(thing.data)
           end
         end
       end

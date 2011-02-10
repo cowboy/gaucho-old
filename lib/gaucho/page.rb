@@ -1,6 +1,7 @@
 module Gaucho
   class Page
     include ShortSha
+    include FixEncoding
 
     attr_reader :pageset, :id, :tree, :commits, :commit, :shown
 
@@ -154,10 +155,7 @@ module Gaucho
       Find.find(abs_page_path) do |path|
         if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
           if path =~ %r{^#{abs_page_path}/(.*)}
-            contents = IO.read(path)
-            # Is there a better way to handle encoding for binary files?
-            contents.force_encoding('BINARY') unless contents.valid_encoding?
-            files[$1] = contents
+            files[$1] = fix_encoding(IO.read(path))
           end
         end
       end

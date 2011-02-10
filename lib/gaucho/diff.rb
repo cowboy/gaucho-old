@@ -1,12 +1,13 @@
 # A wrapper for Grit::Diff
 module Gaucho
   class Diff
+    include FixEncoding
+
     attr_reader :commit, :diff
 
     def initialize(commit, diff)
       @commit = commit
       @diff = diff
-      @diff.diff.force_encoding('utf-8')
     end
 
     def to_s
@@ -34,7 +35,11 @@ module Gaucho
     def deleted?; diff.deleted_file; end
     def updated?; !created? && !deleted?; end
     def binary?; diff.diff.start_with? 'Binary files'; end
-    def data; diff.diff; end
+    
+    # The Grit::Diff diff text, with its encoding "fixed."
+    def data
+      fix_encoding(diff.diff)
+    end
 
     # Test whether or not the specified Grit::Diff is relevant to the
     # specified Gaucho::Page.

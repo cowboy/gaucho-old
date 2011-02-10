@@ -7,6 +7,20 @@ module Gaucho
     end
   end
 
+  # Attempt to fix string encoding using this simple (and possibly horribly
+  # flawed logic): If a UTF-8 string has invalid encoding, it's binary data.
+  # Otherwise, it's valid UTF-8.
+  module FixEncoding
+    def fix_encoding(str)
+      copy = String.new(str).force_encoding('utf-8')
+      if copy.valid_encoding?
+        copy
+      else
+        copy.force_encoding('ascii-8bit')
+      end
+    end
+  end
+
   # More friendly looking dot-syntax access for hash keys.
   # http://mjijackson.com/2010/02/flexible-ruby-config-objects
   class Config
