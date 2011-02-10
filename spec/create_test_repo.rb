@@ -251,15 +251,11 @@ end
 
 ### Including a file, a few different ways.
 
-The file _({{ #{incl} | link }})_ is being included in its default format:
+The file {{ #{incl} | link }}, included in its default format:
 
 {{ #{incl} }}
 
-Here it's being included explicitly as code:
-
-{{ #{incl} | code }}
-
-And here as text:
+And explicitly as text:
 
 {{ #{incl} | text }}
   EOF

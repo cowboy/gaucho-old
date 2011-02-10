@@ -53,7 +53,26 @@ module Gaucho
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'yay')
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
     $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'))
+
 =begin
+    p Renderer.filter_from_name('foo.txt')
+    p Renderer.filter_from_name('foo.text')
+    p Renderer.filter_from_name('foo.js')
+    p Renderer.filter_from_name('foo.css')
+    p Renderer.filter_from_name('foo.markdown')
+    p Renderer.filter_from_name('foo.html')
+    p Renderer.filter_from_name('foo.bar')
+    pg = $pageset['unicode-article']
+    pg.check_local_mods
+    p pg.title
+    p '== files =='
+    pg.files.each do |name, data|
+      p [name, data.encoding.name, data.length, data.size, data.bytesize]
+    end
+    p '== commit =='
+    pg.commits.last.files.each do |name, data|
+      p [name, data.encoding.name, data.length, data.size, data.bytesize]
+    end
     p $pageset.first.commit.diffs
     p $pageset.first.files
     p $pageset.subdir_path
