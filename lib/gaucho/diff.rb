@@ -6,6 +6,7 @@ module Gaucho
     def initialize(commit, diff)
       @commit = commit
       @diff = diff
+      @diff.diff.force_encoding('utf-8')
     end
 
     def to_s

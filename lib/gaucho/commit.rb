@@ -77,7 +77,11 @@ module Gaucho
 
     # The underlying Grit::Commit instance for this Commit.
     def commit
-      @commit ||= pageset.repo.commit(@commit_id)
+      unless @commit
+        @commit = pageset.repo.commit(@commit_id)
+        @commit.message.force_encoding('utf-8')
+      end
+      @commit
     end
 
     # The Grit::Tree instance representing the Page at this Commit.

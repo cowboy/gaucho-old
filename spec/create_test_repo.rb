@@ -1,10 +1,13 @@
+#-*- coding: utf-8 -*-
+
 require 'grit'
 require 'fileutils'
 require 'yaml'
 require 'base64'
+require 'unicode_utils'
 require 'pp'
 
-@titles = %w{Algid Factotum Jitney Sartorial Aestival Balter Tripsis Gormless Anfractuous Lulliloo}
+@titles = %w{Ünîçòdé Algid Factotum Jitney Sartorial Aestival Tripsis Gormless Anfractuous Lulliloo}
 
 @all_cats = %w(news projects articles)
 @all_tags = %w(fun awesome cool lame bad sweet great weak zesty)
@@ -77,6 +80,12 @@ EOF
 
 @paths = {}
 
+class String
+  def unicode_normalize
+    UnicodeUtils.nfkd(self).gsub(/[^\x00-\x7F]/, '').to_s
+  end
+end
+
 class Array
   def to_yaml_style
     :inline
@@ -110,7 +119,7 @@ def article_title(title)
 end
 
 def article_path(title)
-  article_title(title).downcase.sub(' ', '-')
+  article_title(title).unicode_normalize.downcase.sub(' ', '-')
 end
 
 def read_index(title)
@@ -124,7 +133,18 @@ end
 
 def write_index(title, docs)
   path = article_path(title)
-  index = docs.first.to_yaml.lines.to_a[1..-1].join + "--- |\n" + docs.last
+  # Since this script tries to simulate how user data will actually be stored,
+  # ie. without extra quoting or \u-style escaping, and because .to_yaml escapes
+  # unicode and quotes multi-line strings, YAML serialization is done manually.
+  metas = []
+  docs.first.each do |key, value|
+    metas << if value.class == Array
+      "#{key}: [#{value.join(', ')}]"
+    else
+      "#{key}: #{value}"
+    end
+  end
+  index = metas.join("\n") + "\n--- |\n" + docs.last
   FileUtils.mkdir_p(path)
   File.open("#{path}/index.md", 'w') {|f| f.write(index)}
 end
