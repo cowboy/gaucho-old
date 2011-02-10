@@ -40,7 +40,7 @@ module Gaucho
     #
     # {{ content.html | html }}
     def self.html(o)
-      return invalid_encoding(o.name) unless o.data.valid_encoding?
+      return invalid_encoding(o) unless valid_data?(o)
       o.data
     end
 
@@ -49,7 +49,7 @@ module Gaucho
     # {{ content.txt | text }}
     # {{ content.txt | text(class="awesome-pre") }}
     def self.text(o)
-      return invalid_encoding(o.name) unless o.data.valid_encoding?
+      return invalid_encoding(o) unless valid_data?(o)
       %Q{<pre#{o.attrs}>#{escape(o)}</pre>}
     end
 
@@ -57,18 +57,8 @@ module Gaucho
     #
     # {{ content.html | escape }}
     def self.escape(o)
-      return invalid_encoding(o.name) unless o.data.valid_encoding?
+      return invalid_encoding(o) unless valid_data?(o)
       escape_html(o.data)
-    end
-
-    # Embed syntax-highlighted source code.
-    #
-    # {{ example.js | code }}
-    def self.code(o)
-      return invalid_encoding(o.name) unless o.data.valid_encoding?
-      lang = CodeRay::FileType.fetch(o.name)
-      code = CodeRay.scan(o.data, lang).div(:line_numbers => :table)
-      %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
 
     # Get a raw Blob URL.
@@ -123,19 +113,21 @@ module Gaucho
       link(o, true)
     end
 
-    # Which filter should be used, by default, for a given file extension?
-    @filter_map = {
+    # Which filter should be used, by default, for a given file extension? If
+    # a matching filter isn't found, the @@filter_default value is used.
+    @@filter_default = :text
+    @@filter_map = {
+      toc: [:toc], # hackish
       markdown: [:md],
       html: [:htm],
       text: [:txt],
-      code: [:js, :css, :php, :rb, :applescript],
       image: [:jpg, :jpeg, :gif, :png],
     }
 
-    # Expose @filter_map to allow additions or modifications.
-    def self.filter_map
-      @filter_map
-    end
+    # Expose @@filter_map and @@filter_default to allow modifications.
+    def self.filter_default=(value); @@filter_default = value; end
+    def self.filter_default; @@filter_default; end
+    def self.filter_map; @@filter_map; end
 
     # Render content recursively, starting with index.
     def self.render_page(page, data = nil, options = {}, name = nil, filter = nil, arg = nil)
@@ -159,7 +151,7 @@ module Gaucho
           filters.compact!
 
           # If no filter was specified, choose a default filter based on the
-          # filename and @filter_map.
+          # filename and @@filter_map.
           filters = [filter_from_name(name)] if filters.empty?
 
           result = page/name rescue invalid_file(name)
@@ -205,17 +197,25 @@ module Gaucho
 
     # Get the appropriate filter for a give filename.
     def self.filter_from_name(name = '')
-      return nil unless name =~ /\.?([^.]+)$/
+      return nil unless name =~ /([^.]+)$/
 
-      type = $1.downcase.to_sym
+      ext = $1.downcase.to_sym
 
-      t = filter_map.find {|kv| kv[1].find {|i| i == type}}
-      t.nil? ? type : t[0]
+      type = filter_map.collect do |filter, exts|
+        filter if filter == ext || exts.find {|e| e == ext}
+      end
+
+      type = type.compact.first || filter_default
     end
 
-    # Handle invalid encoding (binary?) in a helpful way.
-    def self.invalid_encoding(file)
-      %Q{<b style="color:red">Invalid encoding: #{file}</b>}
+    # Ensure that data is not binary or invalidly encoded.
+    def self.valid_data?(o)
+      o.data.encoding.name != 'ASCII-8BIT' && o.data.valid_encoding?
+    end
+
+    # Handle binary or invalidly encoded data in a helpful way.
+    def self.invalid_encoding(o)
+      %Q{<b style="color:red">Invalid encoding: #{o.name}</b>}
     end
 
     # Handle invalid files in a helpful way.

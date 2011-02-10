@@ -17,7 +17,15 @@
       .diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
       .diff del strong{font-weight:normal;background:#faa;}
       .diff ins strong{font-weight:normal;background:#afa;}
-      </style>
+      
+      #{Pygments.style(:monokai, :html, ['-a', '.highlighttable'])}
+      .highlighttable { border-collapse: collapse; }
+      .highlighttable .linenos { color: #aaa; background: #444; padding: 4px 3px 4px 5px; }
+      .highlighttable .linenos a { color: #aaa; text-decoration: none; }
+      .highlighttable .linenos a:hover { color: #fff; text-decoration: underline; }
+      .highlighttable td { border: 1px solid #444; padding: 4px 6px; }
+      .highlighttable pre { margin: 0; line-height: 125%; }
+    </style>
   %body
     %div{ style: 'float: left' }
       - if @index_back

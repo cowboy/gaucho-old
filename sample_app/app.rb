@@ -14,11 +14,23 @@ module Diffy
   end
 end
 
+# Pygments limitation workaroung (the inability to handle the -a argument for an
+# html style.
+module Pygments
+  def self.style(style, formatter, options = [])
+    execute(["-S", style, "-f", formatter] + options)
+  end
+end
+
 module Gaucho
-  module RendererX
+  # A basic syntax highlighter "code" filter.
+  module Renderer
+    filter_map[:code] = [:js, :css, :php, :rb, :applescript]
     def self.code(o)
-      return invalid_encoding(o.name) unless o.data.valid_encoding?
-      code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html, linenos: :table)
+      return invalid_encoding(o) unless valid_data?(o)
+      # TODO: figure out options: hl_lines: [1,3,5], linenostart
+      code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html,
+        linenos: :table, anchorlinenos: true, lineanchors: o.name)
       %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
   end
