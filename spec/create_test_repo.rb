@@ -179,7 +179,10 @@ def create_article(title)
   meta['Author'] = author unless author.nil?
   docs << <<-EOF
 
-This is a sample article about [#{title}](/#{path}#arbitrary-hash) by [C{{ #{incl} }}WB{{ #{incl} }}Y]({{ #{incl} | url }}).
+This is a sample article about the word "[#{title}](/#{path}#arbitrary-hash)."
+
+[{{ #{incl} }} Super Cowboy Hats!! {{ #{incl} }}]({{ #{incl} | url }})
+
 #{@all_more_toc.shift_rotate(1)[0]}
   EOF
   docs
@@ -264,12 +267,15 @@ And explicitly as text:
   commit_articles("#{title}: included a file.")
 end
 
-# add two more files, committing articles in groups of 3
+# add a tag, two more files, committing articles in groups of 3
 @titles_tmp = []
 @titles.each_index do |i|
   title = @titles[i]
   @titles_tmp << title
+
   docs = read_index(title)
+  docs[0]['tags'].add_and_rotate(@all_tags, 1)
+
   incl = write_incl(title)
   docs[1] += <<-EOF
 
