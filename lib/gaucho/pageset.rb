@@ -98,25 +98,24 @@ module Gaucho
       @commits_by_page = {}
 
       current_id = nil
-      added = nil
       idx = 0
 
       log = repo.git.native(:log, {pretty: 'oneline', name_only: true,
-        parents: true, reverse: true, timeout: false})
+        reverse: true, timeout: false})
 
       log.split("\n").each do |line|
         if line =~ /^([0-9a-f]{40})/
           current_id = $1
           @commit_order[current_id] = idx += 1
-          added = false
-        elsif !added
-          added = true
+        else
           if line =~ %r{^#{subdir_path}(.*?)/}
             @commits_by_page[$1] ||= []
             @commits_by_page[$1] << current_id
           end
         end
       end
+
+      @commits_by_page.each {|p, commits| commits.uniq!}
     end
 
     # Build page index for this repo. If nil is passed, build all pages,

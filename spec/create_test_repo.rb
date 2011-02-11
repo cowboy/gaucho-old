@@ -194,14 +194,14 @@ end
 
 init_repo('test_repo')
 
-# create
+# create articles
 @titles.each do |title|
   docs = create_article(title)
   write_index(title, docs)
   commit_articles("Added #{title} article.", true)
 end
 
-# update
+# modify tags, delete date, add text
 @titles.each do |title|
   docs = read_index(title)
   docs[0]['tags'].add_and_rotate(@all_tags, 1)
@@ -217,7 +217,7 @@ end
   commit_articles("#{title}: added a tag and some content.")
 end
 
-# update
+# modify subtitle, add text
 @titles.each do |title|
   docs = read_index(title)
   docs[0]['subtitle'].sub(/some stuff/, 'an article')
@@ -232,7 +232,7 @@ end
   commit_articles("#{title}: tweaked subtitle, added more content.")
 end
 
-# update
+# change text
 @titles.each do |title|
   docs = read_index(title)
   docs[1].gsub!(/\b(foo|bar|baz)\b/) do |word|
@@ -243,7 +243,7 @@ end
   commit_articles("#{title}: uppercased a word (or three).")
 end
 
-# update
+# add content and a file
 @titles.each do |title|
   docs = read_index(title)
   incl = write_incl(title)
@@ -263,5 +263,36 @@ And explicitly as text:
   write_index(title, docs)
   commit_articles("#{title}: included a file.")
 end
+
+# add two more files, committing articles in groups of 3
+@titles_tmp = []
+@titles.each_index do |i|
+  title = @titles[i]
+  @titles_tmp << title
+  docs = read_index(title)
+  incl = write_incl(title)
+  docs[1] += <<-EOF
+
+### Including a second file:
+
+{{ #{incl} }}
+  EOF
+
+  incl = write_incl(title)
+  docs[1] += <<-EOF
+
+### And a third file:
+
+{{ #{incl} }}
+  EOF
+
+  write_index(title, docs)
+
+  if (@titles.length - i - 1) % 3 == 0
+    commit_articles("#{@titles_tmp.join(', ')}: included 2 files#{@titles_tmp.length > 1 ? ' (per article)' : ''}.")
+    @titles_tmp = []
+  end
+end
+
 
 puts 'done!'
