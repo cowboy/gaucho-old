@@ -26,7 +26,12 @@ module Gaucho
     # {{ content.md | markdown }}
     def self.markdown(o)
       rd = RDiscount.new(o.data, :smart, :generate_toc)
-      rd.to_html.gsub(/<!--TOC_PLACEHOLDER-->/, rd.toc_content)
+      toc = rd.toc_content
+      # Since the largest header used in content is typically H2, remove the
+      # extra unnecessary <ul> created by RDiscount when a H1 doesn't exist in
+      # the content.
+      toc.sub!(%r{^(\s+)(<ul>)\n\n\1\2(.*)\n(\s+)</li>\n\4</ul>\n$}m, "\\1\\2\\3\n")
+      rd.to_html.gsub(/<!--TOC_PLACEHOLDER-->/, toc)
     end
 
     # Replace any {{ toc }} placeholder with the RDiscount-generated TOC.
