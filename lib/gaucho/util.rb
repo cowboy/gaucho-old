@@ -12,7 +12,7 @@ module Gaucho
   # Otherwise, it's valid UTF-8.
   module FixEncoding
     def fix_encoding(str)
-      copy = String.new(str).force_encoding('utf-8')
+      copy = str.dup.force_encoding('utf-8')
       if copy.valid_encoding?
         copy
       else
