@@ -100,7 +100,7 @@ module Gaucho
         "/stuff-tagged-#{tag}"
       end
       def cat_url(cat)
-        "/#{cat}"
+        "/#{cat}-stuff"
       end
       # Render diffs for page revision history.
       def render_diff(diff)
@@ -129,7 +129,7 @@ module Gaucho
     end
 
     # TAGS
-    # /content-tagged-{tag}
+    # /stuff-tagged-{tag}
     get %r{^/stuff-tagged-([-\w]+)} do |tag|
       p ['tag', params[:captures]]
       @pages = $pageset.reset_shown
@@ -142,8 +142,8 @@ module Gaucho
     end
 
     # CATEGORIES
-    # /{category}
-    get %r{^/([-\w]+)} do |cat|
+    # /{category}-stuff
+    get %r{^/([-\w]+)-stuff$} do |cat|
       p ['cat', params[:captures]]
       @pages = $pageset.reset_shown
       @pages.reject! {|p| p.categories.index(cat).nil?}.sort
@@ -199,6 +199,12 @@ module Gaucho
       begin
         @page = $pageset[name]
         raise Sinatra::NotFound if @page.nil?
+        if @page.class == String
+          redirect @page, 301
+          # cache?
+          return
+        end
+        
         @page.check_local_mods if development?
         @page.shown = sha
 

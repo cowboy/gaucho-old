@@ -32,6 +32,11 @@ module Gaucho
         repo.tree/subdir
       end
 
+      # Map of renamed Page id (path) to original Page id.
+      @page_paths = {}
+      @tree.trees.each {|tree| @page_paths[tree.name] = tree.name}
+      @renames.each {|page_id, path| @page_paths[path] = page_id}
+
       build_commit_index
     end
 
@@ -46,11 +51,21 @@ module Gaucho
     end
 
     # Get a specific page. This will create a new Page instance internally if
-    # one doesn't already exist.
+    # one doesn't already exist. If the page has been renamed via the renames
+    # options hash, return the new URL (for redirecting).
     def [](page_id)
       page_id.gsub!('/', '-')
+
       build_page(page_id)
-      @pages_by_id[page_id]
+      page = @pages_by_id[page_id]
+
+      if page.nil?
+        nil
+      elsif page.path == page_id
+        page
+      else
+        page.url
+      end
     end
 
     # Get all pages. This will create new Page instances internally for any that
@@ -122,26 +137,28 @@ module Gaucho
     end
 
     # Build page index for this repo. If nil is passed, build all pages,
-    # otherwise build the specified page(s).
-    def build_page(page_ids = nil)
-      @pages_by_id ||= {}
-      @pages_built ||= {}
-
-      if page_ids.nil?
-        page_ids = @tree.trees.map {|tree| tree.name}
+    # otherwise build the specified page.
+    def build_page(page_id = nil)
+      page_id = if page_id
+        @page_paths[page_id]
+      else
+        @page_paths.map {|path, id| id}.uniq
       end
 
-      [*page_ids].each do |page_id|
-        unless @pages_built[page_id]
-          rename_id = renames[page_id] || page_id
-          @pages_built[page_id] = @pages_built[rename_id] = true
-          @pages_by_id[rename_id] = Gaucho::Page.new(self, page_id, rename_id, @commits_by_page[page_id])
+      return unless page_id
+
+      @pages_by_id ||= {}
+
+      [*page_id].each do |id|
+        unless @pages_by_id[id]
+          path = renames[id] || id
+          @pages_by_id[id] = @pages_by_id[path] = Gaucho::Page.new(self, id, path, @commits_by_page[id])
         end
       end
 
       @pages = []
-      @pages_by_id.each {|page_id, page| @pages << page}
-      @pages.sort!
+      @pages_by_id.each {|p_id, page| @pages << page}
+      @pages = @pages.uniq.sort
     end
   end
 end
