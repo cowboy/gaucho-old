@@ -27,10 +27,19 @@ module Gaucho
     #
     # {{ content.md | markdown }}
     def self.markdown(o)
-      rd = RDiscount.new(o.data, :smart, :generate_toc)
-      toc = fix_encoding(rd.toc_content)
+      # Convert options passed to Page#render into arguments for RDiscount.
+      opts = {
+        smart: true,
+        generate_toc: true
+      }.merge(o.options)
+      args = opts.to_a.map{|key, value| value ? key : nil}.compact
+
+      rd = RDiscount.new(o.data, *args)
       content = rd.to_html
 
+      return content unless opts[:generate_toc]
+
+      toc = fix_encoding(rd.toc_content)
       # Since the largest header used in content is typically H2, remove the
       # extra unnecessary <ul> created by RDiscount when a H1 doesn't exist in
       # the content.
@@ -45,8 +54,8 @@ module Gaucho
         id = id.gsub(/['"]/, '').gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
         "#{a}#{id}#{z}"
       end
-      toc.gsub!(/(<a href="#)(.*)(")/, &block)
-      content.gsub!(/(<h\d id=")(.*)(")/, &block)
+      toc.gsub!(/(<a href="#)([^"]+)(")/, &block)
+      content.gsub!(/(<h\d id=")([^"]+)(")/, &block)
 
       # Insert generated TOC into content.
       content.gsub(/<!--TOC_PLACEHOLDER-->/, toc)
@@ -207,7 +216,8 @@ module Gaucho
       flags = {}
       args.each {|key| flags[key] = true}
 
-      Gaucho::Config.new(options.merge({
+      Gaucho::Config.new({
+        options: options,
         page: page,
         data: data,
         name: name,
@@ -215,7 +225,7 @@ module Gaucho
         args: args,
         attrs: attrs,
         flags: flags
-      }))
+      })
     end
 
     # Get the appropriate filter for a give filename.

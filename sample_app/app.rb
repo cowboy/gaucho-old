@@ -14,7 +14,7 @@ module Diffy
   end
 end
 
-# Pygments limitation workaroung (the inability to handle the -a argument for an
+# Pygments limitation workaround (the inability to handle the -a argument for an
 # html style.
 module Pygments
   def self.style(style, formatter, options = [])
@@ -211,7 +211,7 @@ module Gaucho
           @commit = @page.commit
           @commits = @page.commits
           @title = @page.title
-          @content = @page.render(@page.content) #, {no_highlight: true})
+          @content = @page.render(@page.content) #, generate_toc: false)
           @index_back = true
           haml(@page.layout || :page)
         end

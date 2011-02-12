@@ -50,6 +50,10 @@ module Gaucho
       end
     end
 
+    def to_hash
+      @data
+    end
+
     def method_missing(name, *args)
       if name.to_s =~ /(.+)=$/
         self[$1] = args.first
