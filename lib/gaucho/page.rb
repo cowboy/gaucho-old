@@ -3,14 +3,17 @@ module Gaucho
     include ShortSha
     include StringUtils
 
-    attr_reader :pageset, :id, :tree, :commits, :commit, :shown
+    attr_reader :pageset, :id, :path, :tree, :commits, :commit, :shown
 
-    def initialize(pageset, id, commit_ids)
+    def initialize(pageset, id, path, commit_ids)
       @pageset = pageset
       @id = id
+      @path = path
       @tree = pageset.tree/id
       @commits = commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
       self.shown = nil
+    rescue
+      raise Gaucho::PageNotFound
     end
 
     def to_s
@@ -20,7 +23,7 @@ module Gaucho
     # Canonical URL for this Page. Replace any dashes in leading YYYY-,
     # YYYY-MM- or YYYY-MM-DD- with slashes.
     def url
-      url = id.sub(%r{^(\d{4}(?:-\d{2}){0,2}-)}) {|d| d.gsub('-', '/')}
+      url = path.sub(%r{^(\d{4}(?:-\d{2}){0,2}-)}) {|d| d.gsub('-', '/')}
       "/#{url}"
     end
 

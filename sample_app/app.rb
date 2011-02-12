@@ -52,8 +52,9 @@ module Gaucho
 
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'yay')
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
-    $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'))
-
+    $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'), renames: {
+      'algid-article' => 'algid-article-new-url'
+    })
 =begin
     p Renderer.filter_from_name('foo.txt')
     p Renderer.filter_from_name('foo.text')
@@ -197,6 +198,7 @@ module Gaucho
 
       begin
         @page = $pageset[name]
+        raise Sinatra::NotFound if @page.nil?
         @page.check_local_mods if development?
         @page.shown = sha
 

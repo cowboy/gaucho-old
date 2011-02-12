@@ -1,11 +1,13 @@
 # A wrapper for Grit::Repo
 module Gaucho
   # TODO: BETTER ERRORS
+  # TODO: DEFAULT BRANCH?
+  # TODO: BUILD A PAGE FROM FS WITHOUT ANY COMMITS
   class PageSet
     include Enumerable
     extend Forwardable
 
-    attr_reader :repo_path, :repo, :tree, :subdir
+    attr_reader :repo_path, :repo, :tree, :subdir, :renames
     attr_accessor :default_branch
 
     # Forward Array methods to @pages (via the pages method) so that the PageSet
@@ -18,6 +20,7 @@ module Gaucho
 
       # Initialize from options, overriding these defaults.
       { default_branch: 'master', # TODO: MAKE THIS WORK
+        renames: {},
         subdir: nil
       }.merge(options).each do |key, value|
         instance_variable_set("@#{key}".to_sym, value)
@@ -122,14 +125,18 @@ module Gaucho
     # otherwise build the specified page(s).
     def build_page(page_ids = nil)
       @pages_by_id ||= {}
+      @pages_built ||= {}
 
       if page_ids.nil?
-        page_ids = []
-        @commits_by_page.each {|page_id, commits| page_ids << page_id}
+        page_ids = @tree.trees.map {|tree| tree.name}
       end
 
       [*page_ids].each do |page_id|
-        @pages_by_id[page_id] ||= Gaucho::Page.new(self, page_id, @commits_by_page[page_id])
+        unless @pages_built[page_id]
+          rename_id = renames[page_id] || page_id
+          @pages_built[page_id] = @pages_built[rename_id] = true
+          @pages_by_id[rename_id] = Gaucho::Page.new(self, page_id, rename_id, @commits_by_page[page_id])
+        end
       end
 
       @pages = []
