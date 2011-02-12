@@ -1,7 +1,7 @@
 # A wrapper for Grit::Diff
 module Gaucho
   class Diff
-    include FixEncoding
+    include StringUtils
 
     attr_reader :commit, :diff
 

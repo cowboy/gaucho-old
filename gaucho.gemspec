@@ -19,10 +19,8 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.9.2'
 
   s.add_dependency 'grit', '>= 2.4.1'
-  s.add_dependency 'haml', '>= 3.0.25'
   s.add_dependency 'rdiscount', '>= 1.6.5'
-  s.add_dependency 'coderay', '>= 0.9.7'
-  s.add_dependency 'rack', '>= 1.2.1'
+  s.add_dependency 'unicode_utils', '>= 1.0.0'
 
   s.add_development_dependency 'shoulda', '>= 0'
   s.add_development_dependency 'bundler', '~> 1.0.0'

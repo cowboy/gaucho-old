@@ -1,18 +1,17 @@
 # When required directly.
 $:.unshift File.dirname(__FILE__)
 
-# External stuff.
-require 'grit'
+# Stuff that comes with Ruby.
+require 'cgi'
 require 'yaml'
 require 'find'
 require 'date'
 require 'forwardable'
 
-# For the renderer.
+# External stuff.
+require 'grit'
 require 'rdiscount'
-# For the renderer's escape_html helper.
-require 'rack'
-include Rack::Utils
+require 'unicode_utils'
 
 # Gaucho stuff.
 require 'gaucho/version'

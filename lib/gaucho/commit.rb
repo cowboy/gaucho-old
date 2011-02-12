@@ -2,7 +2,7 @@
 module Gaucho
   class Commit
     include ShortSha
-    include FixEncoding
+    include StringUtils
     extend Forwardable
 
     attr_reader :page, :pageset

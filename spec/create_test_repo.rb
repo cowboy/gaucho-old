@@ -81,7 +81,7 @@ EOF
 @paths = {}
 
 class String
-  def unicode_normalize
+  def transliterate
     UnicodeUtils.nfkd(self).gsub(/[^\x00-\x7F]/, '').to_s
   end
 end
@@ -119,7 +119,7 @@ def article_title(title)
 end
 
 def article_path(title)
-  article_title(title).unicode_normalize.downcase.sub(' ', '-')
+  article_title(title).transliterate.downcase.sub(' ', '-')
 end
 
 def read_index(title)
@@ -226,7 +226,7 @@ end
   docs[0]['subtitle'].sub(/some stuff/, 'an article')
   docs[1] += <<-EOF
 
-## Second sample header
+## Î'm lòvíñg "Çråzy" Üñîçòdé Hëàdérs!!?
 
 #{@all_texts.shift_rotate(1).join}
   EOF

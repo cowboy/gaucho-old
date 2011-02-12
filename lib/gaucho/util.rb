@@ -7,10 +7,10 @@ module Gaucho
     end
   end
 
-  # Attempt to fix string encoding using this simple (and possibly horribly
-  # flawed logic): If a UTF-8 string has invalid encoding, it's binary data.
-  # Otherwise, it's valid UTF-8.
-  module FixEncoding
+  module StringUtils
+    # Attempt to fix string encoding using this simple (and possibly horribly
+    # flawed logic): If a UTF-8 string has invalid encoding, it's binary data.
+    # Otherwise, it's valid UTF-8.
     def fix_encoding(str)
       copy = str.dup.force_encoding('utf-8')
       if copy.valid_encoding?
@@ -18,6 +18,11 @@ module Gaucho
       else
         copy.force_encoding('ascii-8bit')
       end
+    end
+
+    # Transliterate a Unicode string to its non-fancy, non-unicode counterpart.
+    def transliterate(str)
+      UnicodeUtils.nfkd(str).gsub(/[^\x00-\x7F]/, '').to_s
     end
   end
 

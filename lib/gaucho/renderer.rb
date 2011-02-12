@@ -21,17 +21,35 @@ module Gaucho
   #   * whitespace is insignificant and will be removed.
   #
   module Renderer
+    extend StringUtils
+
     # Embed markdown.
     #
     # {{ content.md | markdown }}
     def self.markdown(o)
       rd = RDiscount.new(o.data, :smart, :generate_toc)
-      toc = rd.toc_content
+      toc = fix_encoding(rd.toc_content)
+      content = rd.to_html
+
       # Since the largest header used in content is typically H2, remove the
       # extra unnecessary <ul> created by RDiscount when a H1 doesn't exist in
       # the content.
       toc.sub!(%r{^(\s+)(<ul>)\n\n\1\2(.*)\n(\s+)</li>\n\4</ul>\n$}m, "\\1\\2\\3\n")
-      rd.to_html.gsub(/<!--TOC_PLACEHOLDER-->/, toc)
+
+      # Tweak generated TOC links/ids so that they look a bit cleaner, replacing
+      # any unicode chars with their "non-unicode equivalent" and changing any
+      # runs of non-alphanumeric chars to hyphens.
+      block = lambda do |m|
+        a, z = $1, $3
+        id = transliterate($2).downcase
+        id = id.gsub(/['"]/, '').gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+        "#{a}#{id}#{z}"
+      end
+      toc.gsub!(/(<a href="#)(.*)(")/, &block)
+      content.gsub!(/(<h\d id=")(.*)(")/, &block)
+
+      # Insert generated TOC into content.
+      content.gsub(/<!--TOC_PLACEHOLDER-->/, toc)
     end
 
     # Replace any {{ toc }} placeholder with the RDiscount-generated TOC.
@@ -63,7 +81,7 @@ module Gaucho
     # {{ content.html | escape }}
     def self.escape(o)
       return invalid_encoding(o) unless valid_data?(o)
-      escape_html(o.data)
+      CGI::escapeHTML(o.data)
     end
 
     # Get a raw Blob URL.

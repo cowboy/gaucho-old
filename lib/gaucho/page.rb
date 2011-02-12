@@ -1,7 +1,7 @@
 module Gaucho
   class Page
     include ShortSha
-    include FixEncoding
+    include StringUtils
 
     attr_reader :pageset, :id, :tree, :commits, :commit, :shown
 
