@@ -301,6 +301,17 @@ end
   end
 end
 
+# make a branch with some modifications
+`git checkout -b april_fools`
+@titles.each do |title|
+  docs = read_index(title)
+  docs[0]['Title'] += ' APRIL FOOLS!!!'
+
+  write_index(title, docs)
+  commit_articles("#{title}: made a lame joke.")
+end
+`git checkout master`
+
 # modify a few articles (uncommitted)
 @titles[0..2].each do |title|
   docs = read_index(title)
