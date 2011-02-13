@@ -1,7 +1,6 @@
 # A wrapper for Grit::Repo
 module Gaucho
   # TODO: BETTER ERRORS
-  # TODO: BUILD A PAGE FROM FS WITHOUT ANY COMMITS
   class PageSet
     include Enumerable
     extend Forwardable
@@ -32,7 +31,8 @@ module Gaucho
     end
 
     # Rebuild all internal commit / Page caches. Use this to force Gaucho to
-    # show changes if the repo's commits / HEAD have been changed.
+    # show changes if the repo's commits / HEAD have been changed, or if the
+    # check_mods option has been changed.
     def rebuild!
       @tree = if subdir.nil?
         repo.tree
@@ -40,12 +40,9 @@ module Gaucho
         repo.tree/subdir
       end
 
-      # Map of renamed Page id (path) to original Page id.
-      @page_paths = {}
-      @tree.trees.each {|tree| @page_paths[tree.name] = tree.name}
-      @renames.each {|page_id, path| @page_paths[path] = page_id}
-
       @pages = @pages_by_id = nil
+
+      build_page_map!
       build_commit_index!
     end
 
@@ -134,11 +131,32 @@ module Gaucho
       @commits_by_page.each {|p, commits| commits.uniq!}
     end
 
+    # Generate a map of renamed Page id (path) to original Page id. If the
+    # check_mods option is enabled, get the listing from the filesystem,
+    # otherwise build the map from git.
+    def build_page_map!
+      @page_paths = {}
+
+      if check_mods
+        Dir.entries(abs_subdir_path).each do |file|
+          path = "#{abs_subdir_path}/#{file}"
+          if FileTest.directory?(path) && !File.basename(path).start_with?('.')
+            @page_paths[file] = file
+          end
+        end
+      else
+        @tree.trees.each {|tree| @page_paths[tree.name] = tree.name}
+      end
+
+      # Process user-specified Page renames.
+      renames.each {|page_id, path| @page_paths[path] = page_id}
+    end
+
     # Build page index for this repo. If nil is passed, build all pages,
     # otherwise build the specified page.
     def build_page!(page_id = nil)
       page_id = if page_id
-        @page_paths[page_id] || (check_mods && page_id)
+        @page_paths[page_id]
       else
         @page_paths.map {|path, id| id}.uniq
       end

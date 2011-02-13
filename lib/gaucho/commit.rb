@@ -102,7 +102,7 @@ module Gaucho
         actor = Grit::Actor.from_string('John Q. Author')
         now = Time.now
         Grit::Commit.new(pageset.repo, sha, [sha], sha, actor, now, actor, now,
-          [%q{This commit is simulated, and doesn't actually exist yet.}])
+          %w{This commit is simulated!})
       else
         pageset.repo.commit(@commit_id)
       end
