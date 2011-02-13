@@ -12,12 +12,17 @@ module Gaucho
     # flawed logic): If a UTF-8 string has invalid encoding, it's binary data.
     # Otherwise, it's valid UTF-8.
     def fix_encoding(str)
-      copy = str.dup.force_encoding('utf-8')
+      copy = str.dup.force_encoding('UTF-8')
       if copy.valid_encoding?
         copy
       else
-        copy.force_encoding('ascii-8bit')
+        copy.force_encoding('ASCII-8BIT')
       end
+    end
+
+    # Ensure that data is not binary or invalidly encoded.
+    def valid_data?(str)
+      str.encoding.name != 'ASCII-8BIT' && str.valid_encoding?
     end
 
     # Transliterate a Unicode string to its non-fancy, non-unicode counterpart.

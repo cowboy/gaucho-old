@@ -72,7 +72,7 @@ module Gaucho
     #
     # {{ content.html | html }}
     def self.html(o)
-      return invalid_encoding(o) unless valid_data?(o)
+      return invalid_encoding(o) unless valid_data?(o.data)
       o.data
     end
 
@@ -81,7 +81,7 @@ module Gaucho
     # {{ content.txt | text }}
     # {{ content.txt | text(class="awesome-pre") }}
     def self.text(o)
-      return invalid_encoding(o) unless valid_data?(o)
+      return invalid_encoding(o) unless valid_data?(o.data)
       %Q{<pre#{o.attrs}>#{escape(o)}</pre>}
     end
 
@@ -89,7 +89,7 @@ module Gaucho
     #
     # {{ content.html | escape }}
     def self.escape(o)
-      return invalid_encoding(o) unless valid_data?(o)
+      return invalid_encoding(o) unless valid_data?(o.data)
       CGI::escapeHTML(o.data)
     end
 
@@ -239,11 +239,6 @@ module Gaucho
       end
 
       type = type.compact.first || filter_default
-    end
-
-    # Ensure that data is not binary or invalidly encoded.
-    def self.valid_data?(o)
-      o.data.encoding.name != 'ASCII-8BIT' && o.data.valid_encoding?
     end
 
     # Handle binary or invalidly encoded data in a helpful way.

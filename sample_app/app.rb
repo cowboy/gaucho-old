@@ -32,7 +32,7 @@ module Gaucho
   module Renderer
     filter_map[:code] = [:js, :css, :php, :rb, :applescript]
     def self.code(o)
-      return invalid_encoding(o) unless valid_data?(o)
+      return invalid_encoding(o) unless valid_data?(o.data)
       # TODO: figure out options: hl_lines: [1,3,5], linenostart
       code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html,
         linenos: :table, anchorlinenos: true, lineanchors: o.name)
