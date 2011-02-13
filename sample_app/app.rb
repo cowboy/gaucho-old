@@ -228,7 +228,7 @@ module Gaucho
           @commit = @page.commit
           @commits = @page.commits
           @title = @page.title
-          @content = @page.render(@page.content) #, generate_toc: false)
+          @content = @page.render #(nil, generate_toc: false)
           @index_back = true
           haml(@page.layout || :page)
         end
