@@ -7,9 +7,11 @@
     %em
       Note:
       - if @page.shown_local_mods?
-        Showing local modifications. View the
-        %a{ href: @commits.last.url } most recent commit
-        instead.
+        Showing local modifications.
+        - unless @commit.simulated?
+          View the
+          %a{ href: @commits.last.url } most recent commit
+          instead.
       - else
         This page has
         = succeed '.' do
@@ -21,7 +23,7 @@
       The content you are viewing is out of date. View the
       %a{ href: @page.url } most recent revision.
       -#was updated on
-      -#%a{ href: "#commit-#{c.short_sha}" } #{date_format(c.date)}.
+      -#%a{ href: "#commit-#{c.id}" } #{date_format(c.date)}.
 
 ~ @content
 
@@ -40,7 +42,7 @@
 %h3 Revisions
 %ul#revisions
   - @commits.reverse.each do |c|
-    %li{ class: c.shown? && 'shown', id: "commit-#{c.short_sha}" }
+    %li{ class: c.shown? && 'shown', id: "commit-#{c.id}" }
       %a{ href: c.url }
         %span.date= date_format(c.date)
         \-

@@ -138,7 +138,7 @@ module Gaucho
     # otherwise build the specified page.
     def build_page!(page_id = nil)
       page_id = if page_id
-        @page_paths[page_id]
+        @page_paths[page_id] || (check_mods && page_id)
       else
         @page_paths.map {|path, id| id}.uniq
       end

@@ -11,7 +11,7 @@ module Gaucho
     # class feels as Grit::Commit-like as possible.
     def_delegators :commit, *Grit::Commit.public_instance_methods(false)
 
-    def initialize(page, commit_id)
+    def initialize(page, commit_id = nil)
       @page = page
       @pageset = page.pageset
       @commit_id = commit_id
@@ -22,14 +22,30 @@ module Gaucho
       %Q{#<Gaucho::Commit#{s} "#{url}" "#{committed_date}" "#{short_message}">}
     end
 
-    # Use a shortened SHA for the id.
+    # Use a shortened SHA for the id, fabricating one if necessary.
     def id
-      short_sha(@commit_id)
+      if simulated?
+        'simulated'
+      else
+        short_sha(@commit_id)
+      end
     end
 
-    # URL for the page at this Commit.
+    # URL for the page at this Commit. If the commit is simulated, omit the id
+    # from the URL.
     def url
-      %Q{/#{id}#{page.url}}
+      if simulated?
+        page.url
+      else
+        %Q{/#{id}#{page.url}}
+      end
+    end
+
+    # If a commit_id wasn't passed, this commit is simulated. This should only
+    # be used when a new Page, with no commits, is being previewd from the
+    # filesystem, using check_mods.
+    def simulated?
+      @commit_id.nil?
     end
 
     # Is this commit the most recent commit for the Page?
@@ -41,15 +57,17 @@ module Gaucho
     def shown?
       self == page.commit
     end
-
+    
     # Metadata for the Page at this Commit, parsed from "file" (Grit::Blob)
-    # named "index.___"
+    # named "index.___". If the commit is simulated, create an empty metadata
+    # object so that things don't break.
     def meta
-      unless @meta
+      @meta ||= if simulated?
+        Gaucho::Config.new
+      else
         index = tree.blobs.find {|blob| blob.name =~ /^index\./}
-        @meta = page.class.build_metadata(index)
+        page.class.build_metadata(index)
       end
-      @meta
     end
 
     # Contents of "file" (Grit::Blob) at the specified path under the Page at
@@ -76,9 +94,18 @@ module Gaucho
       commit.committed_date
     end
 
-    # The underlying Grit::Commit instance for this Commit.
+    # The underlying Grit::Commit instance for this Commit. If this commit is
+    # simulated, create a completely fabricated Grit::Commit instance.
     def commit
-      @commit ||= pageset.repo.commit(@commit_id)
+      @commit ||= if simulated?
+        sha = 'f' * 40
+        actor = Grit::Actor.from_string('John Q. Author')
+        now = Time.now
+        Grit::Commit.new(pageset.repo, sha, [sha], sha, actor, now, actor, now,
+          [%q{This commit is simulated, and doesn't actually exist yet.}])
+      else
+        pageset.repo.commit(@commit_id)
+      end
     end
 
     # The Grit::Commit message, with its encoding "fixed."

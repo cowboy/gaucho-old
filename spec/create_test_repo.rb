@@ -324,6 +324,20 @@ end
 # create an article (uncommitted)
 @alt_titles[0..0].each do |title|
   docs = create_article(title)
+  incl = write_incl(title)
+  docs[1] += <<-EOF
+
+### Including a file, a few different ways.
+
+The file {{ #{incl} | link }}, included in its default format:
+
+{{ #{incl} }}
+
+And explicitly as text:
+
+{{ #{incl} | text }}
+  EOF
+
   write_index(title, docs)
 end
 

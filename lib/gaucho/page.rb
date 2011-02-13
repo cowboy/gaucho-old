@@ -3,14 +3,19 @@ module Gaucho
     include ShortSha
     include StringUtils
 
-    attr_reader :pageset, :id, :path, :tree, :commits, :commit, :shown
+    attr_reader :pageset, :id, :path, :commits, :commit, :shown
 
     def initialize(pageset, id, path, commit_ids)
       @pageset = pageset
       @id = id
       @path = path
-      @tree = pageset.tree/id
-      @commits = commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
+
+      @commits = if commit_ids.nil?
+        [Gaucho::Commit.new(self)]
+      else
+        commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
+      end
+
       self.shown = nil
     rescue
       raise Gaucho::PageNotFound
@@ -125,8 +130,8 @@ module Gaucho
     end
 
     # Parse metadata and content from a Page index file.
-    def self.build_metadata(index)
-      raise Gaucho::PageNotFound unless index.data
+    def self.build_metadata(index = nil)
+      raise Gaucho::PageNotFound unless index
 
       docs = []
       YAML.each_document(index.data) {|doc| docs << doc} rescue nil
