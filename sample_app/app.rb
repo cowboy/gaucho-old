@@ -7,6 +7,11 @@ require 'rb-pygments'
 
 require '../lib/gaucho'
 
+require 'pp'
+require 'awesome_print'
+
+#def p(*args); nil; end
+
 # Diffy limitation workaround (the inability to specify an actual diff)
 module Diffy
   class Diff
@@ -204,7 +209,6 @@ module Gaucho
           return
         end
         
-        #@page.check_local_mods if development?
         @page.shown = sha
 
         if sha && production?
