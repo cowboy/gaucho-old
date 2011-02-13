@@ -105,22 +105,14 @@ module Gaucho
       end
     end
 
-    # Sort commits. TODO: REMOVE?
-    def sort_commits(shas)
-      shas.sort {|a, b| @commit_order[a].to_i <=> @commit_order[b].to_i}
-    end
-
     protected
 
     # Build commit index for this repo.
     def build_commit_index
       return if @commits_by_page
 
-      @commit_order = {}
       @commits_by_page = {}
-
       current_id = nil
-      idx = 0
 
       log = repo.git.native(:log, {pretty: 'oneline', name_only: true,
         reverse: true, timeout: false})
@@ -128,7 +120,6 @@ module Gaucho
       log.split("\n").each do |line|
         if line =~ /^([0-9a-f]{40})/
           current_id = $1
-          @commit_order[current_id] = idx += 1
         else
           if line =~ %r{^#{subdir_path}(.*?)/}
             @commits_by_page[$1] ||= []
