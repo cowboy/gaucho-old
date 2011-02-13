@@ -1,14 +1,13 @@
 # A wrapper for Grit::Repo
 module Gaucho
   # TODO: BETTER ERRORS
-  # TODO: DEFAULT BRANCH?
   # TODO: BUILD A PAGE FROM FS WITHOUT ANY COMMITS
   class PageSet
     include Enumerable
     extend Forwardable
 
     attr_reader :repo, :tree, :subdir, :renames
-    attr_accessor :default_branch, :check_mods
+    attr_accessor :check_mods
 
     # Forward Array methods to @pages (via the pages method) so that the PageSet
     # can feel as Array-like as possible.
@@ -22,18 +21,23 @@ module Gaucho
       end
 
       # Initialize from options, overriding these defaults.
-      { default_branch: 'master', # TODO: MAKE THIS WORK
-        check_mods: false,
+      { check_mods: false,
         renames: {},
         subdir: nil
       }.merge(options).each do |key, value|
         instance_variable_set("@#{key}".to_sym, value)
       end
 
+      rebuild!
+    end
+
+    # Rebuild all internal commit / Page caches. Use this to force Gaucho to
+    # show changes if the repo's commits / HEAD have been changed.
+    def rebuild!
       @tree = if subdir.nil?
-        @repo.tree
+        repo.tree
       else
-        @repo.tree/subdir
+        repo.tree/subdir
       end
 
       # Map of renamed Page id (path) to original Page id.
@@ -41,7 +45,8 @@ module Gaucho
       @tree.trees.each {|tree| @page_paths[tree.name] = tree.name}
       @renames.each {|page_id, path| @page_paths[path] = page_id}
 
-      build_commit_index
+      @pages = @pages_by_id = nil
+      build_commit_index!
     end
 
     def to_s
@@ -50,7 +55,7 @@ module Gaucho
 
     # Expose the underlying pages array.
     def pages
-      build_page
+      build_page!
       @pages
     end
 
@@ -60,7 +65,7 @@ module Gaucho
     def [](page_id)
       page_id.gsub!('/', '-')
 
-      build_page(page_id)
+      build_page!(page_id)
       page = @pages_by_id[page_id]
 
       if page.nil?
@@ -108,9 +113,7 @@ module Gaucho
     protected
 
     # Build commit index for this repo.
-    def build_commit_index
-      return if @commits_by_page
-
+    def build_commit_index!
       @commits_by_page = {}
       current_id = nil
 
@@ -133,7 +136,7 @@ module Gaucho
 
     # Build page index for this repo. If nil is passed, build all pages,
     # otherwise build the specified page.
-    def build_page(page_id = nil)
+    def build_page!(page_id = nil)
       page_id = if page_id
         @page_paths[page_id]
       else

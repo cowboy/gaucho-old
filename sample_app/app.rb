@@ -120,6 +120,12 @@ module Gaucho
       "<h1>OMG 404</h1>#{' '*512}"
     end
 
+    # TODO: REMOVE?
+    get '/rebuild' do
+      $pageset.rebuild!
+      redirect '/'
+    end
+
     # INDEX
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
       p ['index', params[:captures]]
