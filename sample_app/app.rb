@@ -52,9 +52,8 @@ module Gaucho
 
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'yay')
     #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
-    $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'), renames: {
-      'algid-article' => 'algid-article-new-url'
-    })
+    renames = {'algid-article' => 'algid-article-new-url'}
+    $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'), check_mods: development?, renames: renames)
 =begin
     p Renderer.filter_from_name('foo.txt')
     p Renderer.filter_from_name('foo.text')
@@ -205,7 +204,7 @@ module Gaucho
           return
         end
         
-        @page.check_local_mods if development?
+        #@page.check_local_mods if development?
         @page.shown = sha
 
         if sha && production?

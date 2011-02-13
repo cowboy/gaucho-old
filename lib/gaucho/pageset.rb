@@ -8,7 +8,7 @@ module Gaucho
     extend Forwardable
 
     attr_reader :repo_path, :repo, :tree, :subdir, :renames
-    attr_accessor :default_branch
+    attr_accessor :default_branch, :check_mods
 
     # Forward Array methods to @pages (via the pages method) so that the PageSet
     # can feel as Array-like as possible.
@@ -20,6 +20,7 @@ module Gaucho
 
       # Initialize from options, overriding these defaults.
       { default_branch: 'master', # TODO: MAKE THIS WORK
+        check_mods: false,
         renames: {},
         subdir: nil
       }.merge(options).each do |key, value|

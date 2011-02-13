@@ -7,7 +7,8 @@ require 'base64'
 require 'unicode_utils'
 require 'pp'
 
-@titles = %w{Ünîçòdé Algid Factotum Jitney Sartorial Aestival Tripsis Gormless Anfractuous Lulliloo}
+@titles = %w{Algid Factotum Jitney Sartorial Aestival Tripsis Gormless Anfractuous Lulliloo Ünîçòdé}
+@alt_titles = %w{Discalceate Mimesis Pleonasm Bezoar Volacious Demiurgic}
 
 @all_cats = %w(news projects articles)
 @all_tags = %w(fun awesome cool lame bad sweet great weak zesty)
@@ -300,5 +301,19 @@ end
   end
 end
 
+# modify a few articles (uncommitted)
+@titles[0..2].each do |title|
+  docs = read_index(title)
+  docs[0]['Title'] += '!!!'
+  docs[1].gsub!(/(This is a sample article)/, '\1 with **LOCAL MODIFICATIONS**')
+
+  write_index(title, docs)
+end
+
+# create an article (uncommitted)
+@alt_titles[0..0].each do |title|
+  docs = create_article(title)
+  write_index(title, docs)
+end
 
 puts 'done!'

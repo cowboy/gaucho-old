@@ -5,6 +5,9 @@ Recent content:
   - @pages.each do |p|
     %li
       %a{ href: p.url }= p.title
+      - if p.has_local_mods?
+        %i
+          %b MODIFIED
       %div= p.subtitle
       -#%div= p.commit.id
       %div

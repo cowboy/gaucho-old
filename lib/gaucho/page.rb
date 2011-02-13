@@ -33,7 +33,9 @@ module Gaucho
       @shown = commit_id
 
       @commit = nil
-      unless commit_id.nil?
+      if commit_id.nil?
+        @meta = @files = nil if pageset.check_mods
+      else
         @commit = commits.find {|commit| commit.id.start_with? commit_id}
       end
 
@@ -96,19 +98,12 @@ module Gaucho
       File.join(pageset.abs_subdir_path, id)
     end
 
-    # Enable checking for local modifications. Calling this will also clear the
-    # internal local modifications file and metadata caches.
-    def check_local_mods(state = true)
-      @check_local_mods = state
-      @meta = nil
-      @files = nil
-    end
-
-    # If the Repo "check_fs" option is set and the shown commit is nil, check to
-    # see if the local filesystem has modificiations by building a filesystem-
-    # based file index and comparing it with the file index of the last Commit.
+    # If the PageSet "check_mods" option is set and the shown commit is nil,
+    # check to see if the local filesystem has modificiations by building a
+    # filesystem-based file index and comparing it with the file index of the
+    # last Commit.
     def has_local_mods?
-      if @check_local_mods
+      if pageset.check_mods
         @files ||= build_file_index
         @files != commits.last.files
       end
