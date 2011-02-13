@@ -7,16 +7,19 @@ module Gaucho
     include Enumerable
     extend Forwardable
 
-    attr_reader :repo_path, :repo, :tree, :subdir, :renames
+    attr_reader :repo, :tree, :subdir, :renames
     attr_accessor :default_branch, :check_mods
 
     # Forward Array methods to @pages (via the pages method) so that the PageSet
     # can feel as Array-like as possible.
     def_delegators :pages, *Array.public_instance_methods(false)
 
-    def initialize(repo_path, options = {})
-      @repo_path = repo_path
-      @repo = Grit::Repo.new(repo_path)
+    def initialize(repo, options = {})
+      @repo = if repo.class == Grit::Repo
+        repo
+      else
+        Grit::Repo.new(repo)
+      end
 
       # Initialize from options, overriding these defaults.
       { default_branch: 'master', # TODO: MAKE THIS WORK
@@ -28,9 +31,9 @@ module Gaucho
       end
 
       @tree = if subdir.nil?
-        repo.tree
+        @repo.tree
       else
-        repo.tree/subdir
+        @repo.tree/subdir
       end
 
       # Map of renamed Page id (path) to original Page id.
@@ -96,9 +99,9 @@ module Gaucho
     # Absolute filesystem path for all Pages in this PageSet.
     def abs_subdir_path
       if subdir
-        File.join(repo_path, subdir)
+        File.join(repo.working_dir, subdir)
       else
-        repo_path
+        repo.working_dir
       end
     end
 

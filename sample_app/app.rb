@@ -50,10 +50,10 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'yay')
-    #$pageset = Gaucho::PageSet.new(File.expand_path('test_repo'), subdir: 'nay')
+    #$pageset = Gaucho::PageSet.new('test_repo', subdir: 'yay')
+    #$pageset = Gaucho::PageSet.new('test_repo', subdir: 'nay')
     renames = {'algid-article' => 'algid-article-new-url'}
-    $pageset = Gaucho::PageSet.new(File.expand_path('../spec/test_repo'), check_mods: development?, renames: renames)
+    $pageset = Gaucho::PageSet.new('../spec/test_repo', check_mods: development?, renames: renames)
 =begin
     p Renderer.filter_from_name('foo.txt')
     p Renderer.filter_from_name('foo.text')
