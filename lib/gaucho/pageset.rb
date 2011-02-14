@@ -149,7 +149,9 @@ module Gaucho
       end
 
       # Process user-specified Page renames.
-      renames.each {|page_id, path| @page_paths[path] = page_id}
+      renames.each do |page_id, path|
+        @page_paths[path] = page_id if @page_paths[page_id]
+      end
     end
 
     # Build page index for this repo. If nil is passed, build all pages,
