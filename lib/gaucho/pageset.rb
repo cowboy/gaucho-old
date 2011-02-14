@@ -111,7 +111,7 @@ module Gaucho
 
     # Build commit index for this repo.
     def build_commit_index!
-      @commits_by_page = {}
+      @commits_by_page = Hash.new {|h,k| h[k] = []}
       current_id = nil
 
       log = repo.git.native(:log, {pretty: 'oneline', name_only: true,

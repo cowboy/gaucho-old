@@ -55,11 +55,20 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    #$pageset = Gaucho::PageSet.new('test_repo', subdir: 'yay')
-    #$pageset = Gaucho::PageSet.new('test_repo', subdir: 'nay')
-    renames = {'algid-article' => 'algid-article-new-url'}
-    $pageset = Gaucho::PageSet.new('../spec/test_repo', check_mods: development?, renames: renames)
+    check_mods = development?
+    renames = {
+      'paean-article' => 'paean-article-new-url',
+      'invidious-article' => 'invidious-article-new-url',
+      'oscitate-article' => 'oscitate-article-new-url',
+      'piste-article' => 'piste-article-new-url',
+    }
+    $pageset = Gaucho::PageSet.new('../spec/test_repo_small', check_mods: check_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo_huge', check_mods: check_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo_double', check_mods: check_mods, renames: renames, subdir: 'yay')
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo_double', check_mods: check_mods, renames: renames, subdir: 'nay')
+
 =begin
+#ap $pageset
     p Renderer.filter_from_name('foo.txt')
     p Renderer.filter_from_name('foo.text')
     p Renderer.filter_from_name('foo.js')

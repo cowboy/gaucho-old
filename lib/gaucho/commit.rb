@@ -48,9 +48,13 @@ module Gaucho
       @commit_id.nil?
     end
 
-    # Is this commit the most recent commit for the Page?
+    # Is this commit the most recent actual (not simulated) commit for the Page?
     def latest?
-      self == page.commits.last
+      if page.has_local_mods?
+        self == page.commits[-2]
+      else
+        self == page.commits.last
+      end
     end
 
     # Is this commit the currently shown commit for the Page?
@@ -100,8 +104,8 @@ module Gaucho
       @commit ||= if simulated?
         sha = 'f' * 40
         actor = Grit::Actor.from_string('John Q. Author')
-        now = Time.now
-        Grit::Commit.new(pageset.repo, sha, [sha], sha, actor, now, actor, now,
+        time = page.date
+        Grit::Commit.new(pageset.repo, sha, [sha], sha, actor, time, actor, time,
           %w{This commit is simulated!})
       else
         pageset.repo.commit(@commit_id)

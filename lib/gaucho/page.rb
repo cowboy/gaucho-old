@@ -9,11 +9,12 @@ module Gaucho
       @pageset = pageset
       @id = id
       @path = path
+      @commit_ids = commit_ids
 
-      @commits = if commit_ids.nil?
-        [Gaucho::Commit.new(self)]
-      else
-        commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
+      @commits = commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
+
+      if !committed? || has_local_mods?
+        @commits.push(Gaucho::Commit.new(self))
       end
 
       self.shown = nil
@@ -89,6 +90,16 @@ module Gaucho
       files[file] or raise Gaucho::FileNotFound.new(file)
     end
 
+    # Either the last commit's committed date, or the most recent file last
+    # modified time, if shown_local_mods? is true.
+    def date
+      if shown_local_mods?
+        @files_last_modified
+      else
+        commits.last.date
+      end
+    end
+
     # Relative (to repo root) filesystem path for this Page.
     def page_path
       if pageset.subdir_path != ''
@@ -103,13 +114,18 @@ module Gaucho
       File.join(pageset.abs_subdir_path, id)
     end
 
+    # Has this page been committed yet?
+    def committed?
+      !@commit_ids.empty?
+    end
+
     # If the PageSet "check_mods" option is set and the shown commit is nil,
     # check to see if the local filesystem has modificiations by building a
     # filesystem-based file index and comparing it with the file index of the
     # last Commit.
     def has_local_mods?
       if pageset.check_mods
-        @files ||= build_file_index
+        build_file_index!
         @files != commits.last.files
       end
     end
@@ -151,19 +167,21 @@ module Gaucho
     protected
 
     # Build page file index from filesystem.
-    def build_file_index
-      files = {}
+    def build_file_index!
+      return if @files
+
+      @files = {}
+      @files_last_modified = nil
 
       # Iterate over all files, recursively.
       Find.find(abs_page_path) do |path|
         if !FileTest.directory?(path) && !File.basename(path).start_with?('.')
           if path =~ %r{^#{abs_page_path}/(.*)}
-            files[$1] = fix_encoding(IO.read(path))
+            @files_last_modified = [@files_last_modified, File.new(path).mtime].compact.max
+            @files[$1] = fix_encoding(IO.read(path))
           end
         end
       end
-
-      files
     end
   end
 end
