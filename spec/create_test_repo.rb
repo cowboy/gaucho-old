@@ -61,7 +61,7 @@ class TestRepoBuilder
 
     @all_authors = [nil, 'John Q. Public', 'John Q. Public <john@example.com>']
 
-    @all_dates = [nil, '2009-09-25 12:30:00 -0500']
+    @all_dates = [nil, '1999-12-31 23:59:59 -0500']
 
     @all_texts = [
       %Q{This text has **bold** and _italic_ text, some "quoted text that can't be beat," and look, [an external link](http://benalman.com) too!},
@@ -115,6 +115,8 @@ gnEVrZDwJ3pH4l3a+HYRv+AJtUnCfTsdehMFIenuzcZqLCCmJwSaJK/gBD8I
     @file_subdirs = ['', 'zing/', 'zang/', 'zing/zong/']
     
     @page_paths = {}
+    
+    @time = Time.new(2007, 1, 2, 3, 4, 5, '-05:00')
   end
   
   def article_title(title)
@@ -199,8 +201,11 @@ This is a sample article about the word "[#{title}](/#{path}#arbitrary-hash)."
   def commit_articles(commit_msg, added = false)
     print '.'
     `git add .`
-    `git commit -m "#{commit_msg}"`
-    sleep $delay
+    @time += 86400 * 1.8
+    author_time = "#{@time.to_i} -0500"
+    @time += 86400 * 0.3
+    commit_time = "#{@time.to_i} -0500"
+    `export GIT_AUTHOR_DATE="#{author_time}"; export GIT_COMMITTER_DATE="#{commit_time}"; git commit -m "#{commit_msg}"`
   end
 
   def do_stuff
@@ -352,7 +357,6 @@ end
 @titles = %w{Ünîçòdé Gallimaufry Haptic Lacuna Sidereal Risible Turophile Scion Opprobrium Paean Brobdignagian Abecedarian Paronomasia Putative Algid Piste Factotum Festschrift Skepsis Micawber Jitney Retral Sobriquet Tumid Pule Meed Oscitate Oolert Sartorial Vitiate Chiliad Aestival Sylva Stat Anomie Cheval-de-frise Pea-souper Autochthon Jument Lascivious Aglet Comity Embrocation Hidrosis Jeremiad Kerf Legerity Marmoreal Oikology Pessimal Quidam Recondite Sybaritic Tyro Ullage Vigorish Xanthochroi Yestreen Zenana Gribble Pelf Aeneous Foofaraw Lanai Shandrydan Tardigrade Ontic Lubricious Inchmeal Costermonger Pilgarlic Costard Quotidian Nystagmus Dubiety Jactation Lubritorium Cullion Wallydrag Flaneur Anodyne Weazen Brumal Incarnadine Gork Xanthous Demersal Anthemion Clapperclaw Kloof Pavid Wyvern Flannelmouthed Chondrule Kyte Pawky Katzenjammer Catchpenny Quincunx Abulia Roundheel Bruxism Aeolian Chorine Infrangible Patzer Mistigris Misoneism Embrangle Exigent Wamble Maven Pulvinar Digerati Exiguous Prolegomenon Pridian Dirl Viviparous Denouement Miscegenation Vavasor Xerosis Gunda Nabob Planogram Zarf Xyloid Invidious Nugatory Decrescent Palmy Frittle Risorial Demesne Asperse Crankle Blague Diapason Palliate Narghile Flagitious Fizgig Troilism Irredenta Balter Tripsis Gormless Anfractuous Lulliloo}
 @alt_titles = %w{Discalceate Mimesis Pleonasm Bezoar Volacious Demiurgic Kakistocracy Mell Psilanthropy Pulchritude}
 
-$delay = 0
 $root = File.expand_path('test_repo')
 
 if Dir.exist?($root)
@@ -383,7 +387,7 @@ TestRepoBuilder.new('double') do |trb|
   trb.do_stuff
 end
 
-TestRepoBuilder.new('huge') do |trb|
+false && TestRepoBuilder.new('huge') do |trb|
   trb.titles = @titles.shift(100)
   trb.titles_check_mods = trb.titles[0..10]
   trb.alt_titles = @alt_titles.shift(4)
