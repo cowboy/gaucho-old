@@ -62,10 +62,11 @@ module Gaucho
       'oscitate-article' => 'oscitate-article-new-url',
       'piste-article' => 'piste-article-new-url',
     }
-    $pageset = Gaucho::PageSet.new('../spec/test_repo_small', check_mods: check_mods, renames: renames)
-    #$pageset = Gaucho::PageSet.new('../spec/test_repo_huge', check_mods: check_mods, renames: renames)
-    #$pageset = Gaucho::PageSet.new('../spec/test_repo_double', check_mods: check_mods, renames: renames, subdir: 'yay')
-    #$pageset = Gaucho::PageSet.new('../spec/test_repo_double', check_mods: check_mods, renames: renames, subdir: 'nay')
+    $pageset = Gaucho::PageSet.new('../spec/test_repo/bare.git', renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/small', check_mods: check_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/huge', check_mods: check_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_mods: check_mods, renames: renames, subdir: 'yay')
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_mods: check_mods, renames: renames, subdir: 'nay')
 
 =begin
 #ap $pageset

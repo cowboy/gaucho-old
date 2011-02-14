@@ -36,6 +36,19 @@ end
 class TestRepoBuilder
   attr_accessor :titles, :titles_check_mods, :alt_titles, :page_subdirs
 
+  def initialize(path)
+    print %Q{Building repo "#{path}"...}
+    @repo_path = File.join($root, path)
+    FileUtils.mkdir_p(@repo_path)
+    FileUtils.cd(@repo_path)
+    `git init .`
+    init_ivars
+    if block_given?
+      yield self
+      print "done!\n"
+    end
+  end
+
   def init_ivars
     @titles = []
     @titles_check_mods = []
@@ -104,25 +117,6 @@ gnEVrZDwJ3pH4l3a+HYRv+AJtUnCfTsdehMFIenuzcZqLCCmJwSaJK/gBD8I
     @page_paths = {}
   end
   
-  def initialize(path)
-    print %Q{Building repo "#{path}"...}
-    @repo_path = File.expand_path(path)
-    FileUtils.rm_rf(@repo_path)
-    FileUtils.mkdir_p(@repo_path)
-    FileUtils.cd(@repo_path)
-    `git init .`
-    init_ivars
-    if block_given?
-      yield self
-      done
-    end
-  end
-
-  def done
-    print "done!\n"
-    FileUtils.cd('..')
-  end
-
   def article_title(title)
     "#{title} Article"
   end
@@ -358,17 +352,30 @@ end
 @titles = %w{Ünîçòdé Gallimaufry Haptic Lacuna Sidereal Risible Turophile Scion Opprobrium Paean Brobdignagian Abecedarian Paronomasia Putative Algid Piste Factotum Festschrift Skepsis Micawber Jitney Retral Sobriquet Tumid Pule Meed Oscitate Oolert Sartorial Vitiate Chiliad Aestival Sylva Stat Anomie Cheval-de-frise Pea-souper Autochthon Jument Lascivious Aglet Comity Embrocation Hidrosis Jeremiad Kerf Legerity Marmoreal Oikology Pessimal Quidam Recondite Sybaritic Tyro Ullage Vigorish Xanthochroi Yestreen Zenana Gribble Pelf Aeneous Foofaraw Lanai Shandrydan Tardigrade Ontic Lubricious Inchmeal Costermonger Pilgarlic Costard Quotidian Nystagmus Dubiety Jactation Lubritorium Cullion Wallydrag Flaneur Anodyne Weazen Brumal Incarnadine Gork Xanthous Demersal Anthemion Clapperclaw Kloof Pavid Wyvern Flannelmouthed Chondrule Kyte Pawky Katzenjammer Catchpenny Quincunx Abulia Roundheel Bruxism Aeolian Chorine Infrangible Patzer Mistigris Misoneism Embrangle Exigent Wamble Maven Pulvinar Digerati Exiguous Prolegomenon Pridian Dirl Viviparous Denouement Miscegenation Vavasor Xerosis Gunda Nabob Planogram Zarf Xyloid Invidious Nugatory Decrescent Palmy Frittle Risorial Demesne Asperse Crankle Blague Diapason Palliate Narghile Flagitious Fizgig Troilism Irredenta Balter Tripsis Gormless Anfractuous Lulliloo}
 @alt_titles = %w{Discalceate Mimesis Pleonasm Bezoar Volacious Demiurgic Kakistocracy Mell Psilanthropy Pulchritude}
 
-$delay = 0.2
+$delay = 0
+$root = File.expand_path('test_repo')
 
-TestRepoBuilder.new('test_repo_small') do |trb|
+if Dir.exist?($root)
+  puts 'Deleting old test repos...'
+  FileUtils.rm_rf($root)
+end
+
+TestRepoBuilder.new('bare') do |trb|
   trb.titles = @titles.shift(10)
-  trb.titles_check_mods = trb.titles[0..2]
-  trb.alt_titles = @alt_titles.shift(1)
-  trb.page_subdirs = []
   trb.do_stuff
 end
 
-TestRepoBuilder.new('test_repo_double') do |trb|
+FileUtils.mv(File.join($root, 'bare', '.git'), File.join($root, 'bare.git'))
+FileUtils.rm_rf(File.join($root, 'bare'))
+
+TestRepoBuilder.new('small') do |trb|
+  trb.titles = @titles.shift(10)
+  trb.titles_check_mods = trb.titles[0..2]
+  trb.alt_titles = @alt_titles.shift(1)
+  trb.do_stuff
+end
+
+TestRepoBuilder.new('double') do |trb|
   trb.titles = @titles.shift(20)
   trb.titles_check_mods = trb.titles[0..4]
   trb.alt_titles = @alt_titles.shift(2)
@@ -376,7 +383,7 @@ TestRepoBuilder.new('test_repo_double') do |trb|
   trb.do_stuff
 end
 
-TestRepoBuilder.new('test_repo_huge') do |trb|
+TestRepoBuilder.new('huge') do |trb|
   trb.titles = @titles.shift(100)
   trb.titles_check_mods = trb.titles[0..10]
   trb.alt_titles = @alt_titles.shift(4)
