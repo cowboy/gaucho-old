@@ -13,10 +13,17 @@ module Gaucho
   #
   #   {{ asset }}
   #   {{ asset | filter }}
-  #   {{ asset | filter(arg) }}
+  #
+  # Filter arguments may be passed as a string (HTML attributes):
+  #   {{ asset | filter(src="img.jpg" alt="Foo!") }}
+  #
+  # Or as a hash, pretty much any way you'd like:
+  #   {{ asset | filter(src: "img.jpg", alt: "Foo!") }}
+  #   {{ asset | filter("src" => "img.jpg", "alt" => "Foo!") }}
+  #   {{ asset | filter({src: "img.jpg", alt: "Foo!"}) }}
+  #   {{ asset | filter({"src" => "img.jpg", "alt" => "Foo!"}) }}
   #
   # Notes:
-  #   * arg can be a comma-separated list of args or flags.
   #   * multiple "| filter" can be specified (is there any value to this?)
   #   * whitespace is insignificant and will be removed.
   #
@@ -79,7 +86,7 @@ module Gaucho
     # Embed text, escaping any HTML.
     #
     # {{ content.txt | text }}
-    # {{ content.txt | text(class="awesome-pre") }}
+    # {{ content.txt | text(class: "awesome-pre") }}
     def self.text(o)
       return invalid_encoding(o) unless valid_data?(o.data)
       %Q{<pre#{o.attrs}>#{escape(o)}</pre>}
@@ -107,7 +114,7 @@ module Gaucho
     # Embed an asset script.
     #
     # {{ awesome.js | script }}
-    # {{ awesome.js | script(id="test") }}
+    # {{ awesome.js | script(id: "test") }}
     def self.script(o)
       %Q{<script src="#{url(o)}"#{o.attrs}></script>}
     end
@@ -115,7 +122,7 @@ module Gaucho
     # Embed an asset CSS stylesheet.
     #
     # {{ pretty.css | css }}
-    # {{ pretty.css | css(media="screen") }}
+    # {{ pretty.css | css(media: "screen") }}
     def self.css(o)
       %Q{<link href="#{url(o)}" rel="stylesheet" type="text/css"#{o.attrs}>}
     end
@@ -123,7 +130,7 @@ module Gaucho
     # Embed an asset image.
     #
     # {{ image.jpg | image }}
-    # {{ image.jpg | image(width="20" style="float:right") }}
+    # {{ image.jpg | image(width: "20", style: "float:right") }}
     def self.image(o)
       %Q{<img src="#{url(o)}"#{o.attrs}>}
     end
@@ -131,7 +138,7 @@ module Gaucho
     # Embed an asset link.
     #
     # {{ file.txt | link }}
-    # {{ file.txt | link(class="popup") }}
+    # {{ file.txt | link(class: "popup") }}
     def self.link(o, download = false)
       query_string = download ? '?dl=1' : ''
       %Q{<a href="#{url(o)}#{query_string}"#{o.attrs}>#{o.name}</a>}
@@ -140,7 +147,7 @@ module Gaucho
     # Embed a downloadable asset link.
     #
     # {{ file.txt | download }}
-    # {{ file.txt | download(class="external") }}
+    # {{ file.txt | download(class: "external") }}
     def self.download(o)
       link(o, true)
     end
@@ -177,7 +184,7 @@ module Gaucho
 
           # Parse filters into filter/argument pairs.
           filters.collect! do |f|
-            f =~ /^([a-z][a-z0-9_]*?)(?:\((.*)\))?$/
+            f =~ /^([a-z_][a-z0-9_]*?)(?:\((.*)\))?$/
             [ $1, $2 ] unless $1.nil?
           end
           filters.compact!
@@ -205,26 +212,36 @@ module Gaucho
     end
 
     # Create a metadata object to be passed into a filter method.
-    def self.filter_metadata(page, data, options, name, arg)
-      # Split arg on commas into an array of "args".
-      args = (arg || '').split(/\s*,\s*/)
+    def self.filter_metadata(page, data, options, name, args)
+      # Attempt to convert args to hash or array.
+      args = begin
+        eval(args)
+      rescue Exception
+        begin
+          eval("{#{args}}")
+        rescue Exception
+          args
+        end
+      end || {}
 
-      # If arg contains HTML attributes, add a space to the beginning.
-      attrs = arg ? " #{arg}" : ''
-
-      # Build hash of "flags" from args.
-      flags = {}
-      args.each {|key| flags[key] = true}
+      # Attempt to convert args to HTML attributes.
+      attrs = if args.class == Hash
+        arr = []
+        args.each {|key, value| arr << %Q{#{key}="#{CGI::escapeHTML(value.to_s)}"}}
+        " #{arr.join(' ')}"
+      elsif args.class == String
+        " #{args}"
+      else
+        ''
+      end
 
       Gaucho::Config.new({
-        options: options,
         page: page,
         data: data,
+        options: options,
         name: name,
-        arg: arg,
         args: args,
-        attrs: attrs,
-        flags: flags
+        attrs: attrs
       })
     end
 

@@ -34,8 +34,8 @@ module Gaucho
     def self.code(o)
       return invalid_encoding(o) unless valid_data?(o.data)
       # TODO: figure out options: hl_lines: [1,3,5], linenostart
-      code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html,
-        linenos: :table, anchorlinenos: true, lineanchors: o.name)
+      args = {linenos: :table, anchorlinenos: true, lineanchors: o.name}.merge(o.args)
+      code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html, args)
       %Q{#{code}<div class="highlight-link">#{link(o)}</div>}
     end
   end
