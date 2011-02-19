@@ -49,7 +49,7 @@ module Gaucho
 
     def []=(key, value)
       @data[key.downcase.to_sym] = if value.class == Hash
-        self.class.new(value)
+        Config.new(value)
       else
         value
       end

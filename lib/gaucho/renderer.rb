@@ -14,14 +14,16 @@ module Gaucho
   #   {{ asset }}
   #   {{ asset | filter }}
   #
-  # Filter arguments may be passed as a string (HTML attributes):
-  #   {{ asset | filter(src="img.jpg" alt="Foo!") }}
-  #
-  # Or as a hash, pretty much any way you'd like:
+  # Filter arguments may be passed as a hash, pretty much any way you'd like,
+  # but this is probably the simplest way:
   #   {{ asset | filter(src: "img.jpg", alt: "Foo!") }}
-  #   {{ asset | filter("src" => "img.jpg", "alt" => "Foo!") }}
-  #   {{ asset | filter({src: "img.jpg", alt: "Foo!"}) }}
-  #   {{ asset | filter({"src" => "img.jpg", "alt" => "Foo!"}) }}
+  #
+  # If a filter implements default_attr, a non-hash-like argument will be
+  # automatically "upgraded" to a hash. For example, if o.default_attr = 'alt',
+  # these would be equivalent:
+  #
+  #   {{ asset | filter(alt: "Hello there!") }}
+  #   {{ asset | filter(Hello there!) }}
   #
   # Notes:
   #   * multiple "| filter" can be specified (is there any value to this?)
@@ -79,7 +81,7 @@ module Gaucho
     #
     # {{ content.html | html }}
     def self.html(o)
-      return invalid_encoding(o) unless valid_data?(o.data)
+      return invalid_encoding(o.name) unless o.valid_data?
       o.data
     end
 
@@ -88,7 +90,7 @@ module Gaucho
     # {{ content.txt | text }}
     # {{ content.txt | text(class: "awesome-pre") }}
     def self.text(o)
-      return invalid_encoding(o) unless valid_data?(o.data)
+      return invalid_encoding(o.name) unless o.valid_data?
       %Q{<pre#{o.attrs}>#{escape(o)}</pre>}
     end
 
@@ -96,7 +98,7 @@ module Gaucho
     #
     # {{ content.html | escape }}
     def self.escape(o)
-      return invalid_encoding(o) unless valid_data?(o.data)
+      return invalid_encoding(o.name) unless o.valid_data?
       CGI::escapeHTML(o.data)
     end
 
@@ -132,6 +134,7 @@ module Gaucho
     # {{ image.jpg | image }}
     # {{ image.jpg | image(width: "20", style: "float:right") }}
     def self.image(o)
+      o.default_attr = 'alt'
       %Q{<img src="#{url(o)}"#{o.attrs}>}
     end
 
@@ -169,11 +172,11 @@ module Gaucho
     def self.filter_map; @@filter_map; end
 
     # Render content recursively, starting with index.
-    def self.render_page(page, data = nil, options = {}, name = nil, filter = nil, arg = nil)
+    def self.render_page(page, data = nil, options = {}, name = nil, filter = nil, args = nil)
       data = page.content if data.nil?
       name = page.meta.index_name if name.nil?
       filter = filter_from_name(name) if filter.nil?
-      #p [name, filter, arg, data.class, data.valid_encoding?]
+      #p [name, filter, args, data.class, data.valid_encoding?]
 
       if data.valid_encoding? && data =~ /\{\{/
         # Process all {{ ... }} substrings.
@@ -205,44 +208,10 @@ module Gaucho
 
       # If a filter exists to handle this request, use it, otherwise error.
       if respond_to?(filter)
-        public_send(filter, filter_metadata(page, data, options, name, arg))
+        public_send(filter, RendererOptions.new(page, data, options, name, args))
       else
         invalid_filter(filter, name)
       end
-    end
-
-    # Create a metadata object to be passed into a filter method.
-    def self.filter_metadata(page, data, options, name, args)
-      # Attempt to convert args to hash or array.
-      args = begin
-        eval(args)
-      rescue Exception
-        begin
-          eval("{#{args}}")
-        rescue Exception
-          args
-        end
-      end || {}
-
-      # Attempt to convert args to HTML attributes.
-      attrs = if args.class == Hash
-        arr = []
-        args.each {|key, value| arr << %Q{#{key}="#{CGI::escapeHTML(value.to_s)}"}}
-        " #{arr.join(' ')}"
-      elsif args.class == String
-        " #{args}"
-      else
-        ''
-      end
-
-      Gaucho::Config.new({
-        page: page,
-        data: data,
-        options: options,
-        name: name,
-        args: args,
-        attrs: attrs
-      })
     end
 
     # Get the appropriate filter for a give filename.
@@ -259,8 +228,8 @@ module Gaucho
     end
 
     # Handle binary or invalidly encoded data in a helpful way.
-    def self.invalid_encoding(o)
-      %Q{<b style="color:red">Invalid encoding: #{o.name}</b>}
+    def self.invalid_encoding(file)
+      %Q{<b style="color:red">Invalid encoding: #{file}</b>}
     end
 
     # Handle invalid files in a helpful way.
@@ -271,6 +240,66 @@ module Gaucho
     # Handle invalid filters in a helpful way.
     def self.invalid_filter(filter, file)
       %Q{<b style="color:red">Invalid filter: #{filter} (#{file})</b>}
+    end
+
+    # Create a data object that can be passed into a filter method.
+    class RendererOptions < Gaucho::Config
+      extend StringUtils
+
+      attr_accessor :default_attr
+
+      def initialize(page, data, options, name, args)
+        # Attempt to convert args to hash or array.
+        args = begin
+          eval(args)
+        rescue Exception
+          begin
+            eval("{#{args}}")
+          rescue Exception
+            args
+          end
+        end || {}
+
+        super({
+          page: page,
+          data: data,
+          options: options,
+          name: name,
+          args: args
+        })
+      end
+
+      def attrs
+        # If args is String, convert to Hash {default_attr => that_string} and
+        # build attrs from that, otherwise just use args.
+        if default_attr && args.class == String
+          map = {}
+          map[default_attr] = args
+          html_attrs(map)
+        else
+          html_attrs
+        end
+      end
+
+      # Ensure that data is not binary or invalidly encoded.
+      def valid_data?
+        self.class.valid_data?(data)
+      end
+
+      protected
+
+      # Attempt to convert args to HTML attributes.
+      def html_attrs(map = args.to_hash)
+        if map.class == Hash
+          arr = []
+          map.each {|key, value| arr << %Q{#{key}="#{CGI::escapeHTML(value.to_s)}"}}
+          " #{arr.join(' ')}"
+        elsif map.class == String
+          " #{map}"
+        else
+          ''
+        end
+      end
     end
   end
 end
