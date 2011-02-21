@@ -176,7 +176,7 @@ module Gaucho
       data = page.content if data.nil?
       name = page.meta.index_name if name.nil?
       filter = filter_from_name(name) if filter.nil?
-      p [name, filter, args, data.class, data.valid_encoding?]
+      #p [name, filter, args, data.class, data.valid_encoding?]
 
       if data.encoding.name == 'UTF-8' && data.valid_encoding? && data =~ /\{\{/
         # Process all {{ ... }} substrings.

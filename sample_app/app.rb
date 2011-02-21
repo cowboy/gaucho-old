@@ -70,12 +70,12 @@ module Gaucho
       'piste-article' => 'piste-article-new-url',
     }
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/bare.git', renames: renames)
-    $pageset = Gaucho::PageSet.new('../spec/test_repo/small', check_fs_mods: check_fs_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/small', check_fs_mods: check_fs_mods, renames: renames)
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/huge', check_fs_mods: check_fs_mods, renames: renames)
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_fs_mods: check_fs_mods, renames: renames, subdir: 'yay')
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_fs_mods: check_fs_mods, renames: renames, subdir: 'nay')
 
-    #$pageset = Gaucho::PageSet.new('/Users/cowboy/Sites/benalman.com/new/ba-import/new', check_fs_mods: check_fs_mods)
+    $pageset = Gaucho::PageSet.new('/Users/cowboy/Sites/benalman.com/new/ba-import/new', check_fs_mods: check_fs_mods)
 
 =begin
 $pageset.pages.each do |page|
