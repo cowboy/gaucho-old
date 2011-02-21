@@ -1,4 +1,5 @@
 require 'sinatra'
+require 'rack/cache'
 
 require 'haml'
 require 'mime/types'
@@ -9,6 +10,10 @@ require '../lib/gaucho'
 
 require 'pp'
 require 'awesome_print'
+
+$cache_path = '/tmp/ba-cache'
+FileUtils.rm_rf $cache_path
+FileUtils.mkdir_p $cache_path
 
 #def p(*args); nil; end
 
@@ -58,9 +63,15 @@ module Gaucho
 
   class App < Sinatra::Base
     #set :environment, :production
+    p "Environment: #{settings.environment}"
 
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
+
+    use Rack::Cache,
+      :verbose => true,
+      :metastore => "file:#{$cache_path}",
+      :entitystore => "file:#{$cache_path}"
 
     check_fs_mods = development?
     renames = {
@@ -75,7 +86,7 @@ module Gaucho
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_fs_mods: check_fs_mods, renames: renames, subdir: 'yay')
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_fs_mods: check_fs_mods, renames: renames, subdir: 'nay')
 
-    $pageset = Gaucho::PageSet.new('/Users/cowboy/Sites/benalman.com/new/ba-import/new', check_fs_mods: check_fs_mods)
+    $pageset = Gaucho::PageSet.new('../../ba-import/new', check_fs_mods: check_fs_mods)
 
 =begin
 $pageset.pages.each do |page|
@@ -138,6 +149,10 @@ end
           d.to_s(:html)
         end
       end
+    end
+
+    before do
+      cache_control :public, :max_age => 1000000 if production?
     end
 
     not_found do
