@@ -63,7 +63,7 @@ module Gaucho
     # object so that things don't break.
     def meta
       @meta ||= if simulated?
-        Gaucho::Config.new
+        page.meta #Gaucho::Config.new
       else
         index = tree.blobs.find {|blob| blob.name =~ /^index\./}
         page.class.build_metadata(index)
@@ -88,11 +88,11 @@ module Gaucho
 
     # The date of this Commit. A specified metadata "date" will be used first,
     # with a fallback to the actual Grit::Commit committed_date.
-    def date
-      if meta.date.nil? || meta.date.empty?
-        commit.committed_date
-      else
+    def date(fallback = commit.committed_date)
+      if meta.date
         Time.parse(meta.date)
+      else
+        fallback
       end
     end
 
@@ -102,7 +102,7 @@ module Gaucho
       @commit ||= if simulated?
         sha = 'f' * 40
         actor = Grit::Actor.from_string('John Q. Author')
-        time = page.files_last_modified
+        time = date(page.files_last_modified)
         Grit::Commit.new(pageset.repo, sha, [sha], sha, actor, time, actor, time,
           %w{This commit is simulated!})
       else
