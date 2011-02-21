@@ -1,16 +1,18 @@
 %h1= @title
+- if @page.subtitle
+  %p.subtitle= @page.subtitle
 
-%p Last updated on #{date_format(@page.date)}
+%p.last_updated Last updated on #{date_format(@page.date)}
 
-- if @page.has_local_mods?
+- if @page.has_fs_mods?
   %p
     %em
       Note:
-      - if @page.shown_local_mods?
+      - if @page.shown_fs_mods?
         Showing local modifications.
         - if @page.committed?
           View the
-          %a{ href: @commits[-2].url } most recent commit
+          %a{ href: @page.latest_actual_commit.url } most recent commit
           instead.
         - else
           This page hasn't been committed yet.
@@ -19,7 +21,7 @@
         = succeed '.' do
           %a{ href: @page.url } local modifications
 
-- elsif @commit.latest?
+- elsif !@commit.latest?
   %p
     %em
       The content you are viewing is out of date. View the

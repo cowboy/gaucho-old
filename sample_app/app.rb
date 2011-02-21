@@ -55,7 +55,7 @@ module Gaucho
     set :root, File.dirname(__FILE__)
     set :haml, format: :html5, attr_wrapper: '"'
 
-    check_mods = development?
+    check_fs_mods = development?
     renames = {
       'paean-article' => 'paean-article-new-url',
       'invidious-article' => 'invidious-article-new-url',
@@ -63,12 +63,20 @@ module Gaucho
       'piste-article' => 'piste-article-new-url',
     }
     #$pageset = Gaucho::PageSet.new('../spec/test_repo/bare.git', renames: renames)
-    $pageset = Gaucho::PageSet.new('../spec/test_repo/small', check_mods: check_mods, renames: renames)
-    #$pageset = Gaucho::PageSet.new('../spec/test_repo/huge', check_mods: check_mods, renames: renames)
-    #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_mods: check_mods, renames: renames, subdir: 'yay')
-    #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_mods: check_mods, renames: renames, subdir: 'nay')
+    $pageset = Gaucho::PageSet.new('../spec/test_repo/small', check_fs_mods: check_fs_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/huge', check_fs_mods: check_fs_mods, renames: renames)
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_fs_mods: check_fs_mods, renames: renames, subdir: 'yay')
+    #$pageset = Gaucho::PageSet.new('../spec/test_repo/double', check_fs_mods: check_fs_mods, renames: renames, subdir: 'nay')
+
+    #$pageset = Gaucho::PageSet.new('/Users/cowboy/Sites/benalman.com/new/ba-import/new', check_fs_mods: check_fs_mods)
 
 =begin
+$pageset.pages.each do |page|
+  if page.meta.tags.nil? || page.meta.tags.empty?
+    puts page.id
+    p page.meta.tags
+  end
+end
 #ap $pageset
     p Renderer.filter_from_name('foo.txt')
     p Renderer.filter_from_name('foo.text')
@@ -78,7 +86,6 @@ module Gaucho
     p Renderer.filter_from_name('foo.html')
     p Renderer.filter_from_name('foo.bar')
     pg = $pageset['unicode-article']
-    pg.check_local_mods
     p pg.title
     p '== files =='
     pg.files.each do |name, data|
@@ -220,11 +227,11 @@ module Gaucho
         @page = $pageset[name]
         raise Sinatra::NotFound if @page.nil?
         if @page.class == String
-          redirect @page, 301
+          redirect @page, 302 # 301
           # cache?
-          return
+          return #"redirect to #{@page}"
         end
-        
+
         @page.shown = sha
 
         if sha && production?

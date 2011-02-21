@@ -43,18 +43,14 @@ module Gaucho
 
     # If a commit_id wasn't passed, this commit is simulated. This should only
     # be used when a new Page, with no commits, is being previewd from the
-    # filesystem, using check_mods.
+    # filesystem, using check_fs_mods.
     def simulated?
       @commit_id.nil?
     end
 
     # Is this commit the most recent actual (not simulated) commit for the Page?
     def latest?
-      if page.has_local_mods?
-        self == page.commits[-2]
-      else
-        self == page.commits.last
-      end
+      self == page.latest_actual_commit
     end
 
     # Is this commit the currently shown commit for the Page?
@@ -93,9 +89,11 @@ module Gaucho
     # The date of this Commit. A specified metadata "date" will be used first,
     # with a fallback to the actual Grit::Commit committed_date.
     def date
-      Time.parse(meta.date)
-    rescue
-      commit.committed_date
+      if meta.date.nil? || meta.date.empty?
+        commit.committed_date
+      else
+        Time.parse(meta.date)
+      end
     end
 
     # The underlying Grit::Commit instance for this Commit. If this commit is
@@ -104,7 +102,7 @@ module Gaucho
       @commit ||= if simulated?
         sha = 'f' * 40
         actor = Grit::Actor.from_string('John Q. Author')
-        time = page.date
+        time = page.files_last_modified
         Grit::Commit.new(pageset.repo, sha, [sha], sha, actor, time, actor, time,
           %w{This commit is simulated!})
       else

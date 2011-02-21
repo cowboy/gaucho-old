@@ -34,7 +34,7 @@ class Array
 end
 
 class TestRepoBuilder
-  attr_accessor :titles, :titles_check_mods, :alt_titles, :page_subdirs
+  attr_accessor :titles, :titles_check_fs_mods, :alt_titles, :page_subdirs
 
   def initialize(path)
     print %Q{Building repo "#{path}"...}
@@ -51,7 +51,7 @@ class TestRepoBuilder
 
   def init_ivars
     @titles = []
-    @titles_check_mods = []
+    @titles_check_fs_mods = []
     @alt_titles = []
     
     @all_cats = %w(news projects articles)
@@ -193,6 +193,19 @@ This is a sample article about the word "[#{title}](/#{path}#arbitrary-hash)."
 
 [{{ #{incl} }} Super Cowboy Hats!! {{ #{incl} }}]({{ #{incl} | url }})
 
+<!--
+TODO: UNIT TEST!
+{{ #{incl} | image }}
+{{ #{incl} | image(This is a test 1!) }}
+{{ #{incl} | image(This is a "test" with (parens), lamen't?) }}
+{{ #{incl} | image(alt: "This is a test 2!") }}
+{{ #{incl} | image(:alt => "This is a test 4!") }}
+{{ #{incl} | image("alt" => "This is a test 5!") }}
+{{ #{incl} | image(alt: "This is a test 6!", width: 100) }}
+{{ #{incl} | image(:alt => "This is a test 7!", :width => 100) }}
+{{ #{incl} | image("alt" => "This is a test 8!", "width" => 100) }}
+-->
+
 #{@all_more_toc.shift_rotate(1)[0]}
     EOF
     docs
@@ -324,7 +337,7 @@ And explicitly as text:
     `git checkout -q master`
 
     # modify a few articles (uncommitted)
-    @titles_check_mods.each do |title|
+    @titles_check_fs_mods.each do |title|
       docs = read_index(title)
       docs[0]['Title'] += '!!!'
       docs[1].gsub!(/(This is a sample article)/, '\1 with **LOCAL MODIFICATIONS**')
@@ -374,14 +387,14 @@ FileUtils.rm_rf(File.join($root, 'bare'))
 
 TestRepoBuilder.new('small') do |trb|
   trb.titles = @titles.shift(10)
-  trb.titles_check_mods = trb.titles[0..2]
+  trb.titles_check_fs_mods = trb.titles[0..2]
   trb.alt_titles = @alt_titles.shift(1)
   trb.do_stuff
 end
 
-TestRepoBuilder.new('double') do |trb|
+false && TestRepoBuilder.new('double') do |trb|
   trb.titles = @titles.shift(20)
-  trb.titles_check_mods = trb.titles[0..4]
+  trb.titles_check_fs_mods = trb.titles[0..4]
   trb.alt_titles = @alt_titles.shift(2)
   trb.page_subdirs = ['yay/', 'nay/']
   trb.do_stuff
@@ -389,7 +402,7 @@ end
 
 false && TestRepoBuilder.new('huge') do |trb|
   trb.titles = @titles.shift(100)
-  trb.titles_check_mods = trb.titles[0..10]
+  trb.titles_check_fs_mods = trb.titles[0..10]
   trb.alt_titles = @alt_titles.shift(4)
   trb.page_subdirs = []
   trb.do_stuff

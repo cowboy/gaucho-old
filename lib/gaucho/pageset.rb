@@ -6,7 +6,7 @@ module Gaucho
     extend Forwardable
 
     attr_reader :repo, :tree, :subdir, :renames
-    attr_accessor :check_mods
+    attr_accessor :check_fs_mods
 
     # Forward Array methods to @pages (via the pages method) so that the PageSet
     # can feel as Array-like as possible.
@@ -20,7 +20,7 @@ module Gaucho
       end
 
       # Initialize from options, overriding these defaults.
-      { check_mods: false,
+      { check_fs_mods: false,
         renames: {},
         subdir: nil
       }.merge(options).each do |key, value|
@@ -32,7 +32,7 @@ module Gaucho
 
     # Rebuild all internal commit / Page caches. Use this to force Gaucho to
     # show changes if the repo's commits / HEAD have been changed, or if the
-    # check_mods option has been changed.
+    # check_fs_mods option has been changed.
     def rebuild!
       @tree = if subdir.nil?
         repo.tree
@@ -132,12 +132,12 @@ module Gaucho
     end
 
     # Generate a map of renamed Page id (path) to original Page id. If the
-    # check_mods option is enabled, get the listing from the filesystem,
+    # check_fs_mods option is enabled, get the listing from the filesystem,
     # otherwise build the map from git.
     def build_page_map!
       @page_paths = {}
 
-      if check_mods
+      if check_fs_mods
         Dir.entries(abs_subdir_path).each do |file|
           path = "#{abs_subdir_path}/#{file}"
           if FileTest.directory?(path) && !File.basename(path).start_with?('.')

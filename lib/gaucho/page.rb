@@ -3,20 +3,13 @@ module Gaucho
     include ShortSha
     include StringUtils
 
-    attr_reader :pageset, :id, :path, :commits, :commit, :shown
+    attr_reader :pageset, :id, :path, :commit, :shown, :files_last_modified
 
     def initialize(pageset, id, path, commit_ids)
       @pageset = pageset
       @id = id
       @path = path
       @commit_ids = commit_ids
-
-      @commits = commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
-
-      if !committed? || has_local_mods?
-        @commits.push(Gaucho::Commit.new(self))
-      end
-
       self.shown = nil
     rescue
       raise Gaucho::PageNotFound
@@ -40,12 +33,29 @@ module Gaucho
 
       @commit = nil
       if commit_id.nil?
-        @meta = @files = nil if pageset.check_mods
+        @meta = @files = @commits = nil if check_fs_mods?
       else
         @commit = commits.find {|commit| commit.id.start_with? commit_id}
       end
 
       @commit ||= commits.last
+    end
+
+    # Get all Commits for this Page. If the Page hasn't yet been committed or
+    # it has local modifications, append a simulated Commit.
+    def commits
+      unless @commits
+        @commits = @commit_ids.collect {|commit_id| Gaucho::Commit.new(self, commit_id)}
+        if has_fs_mods?
+          @commits << Gaucho::Commit.new(self)
+        end
+      end
+      @commits
+    end
+
+    # The most recent actual (not simulated) commit for this Page.
+    def latest_actual_commit
+      commits.reverse.find {|commit| !commit.simulated?}
     end
 
     # Returns true if this Page's id matches the passed date. If no date is
@@ -60,9 +70,9 @@ module Gaucho
     end
 
     # Metadata for the Page at the currently "shown" Commit, or from the index
-    # file in the filesystem if shown_local_mods? is true.
+    # file in the filesystem if shown_fs_mods? is true.
     def meta
-      if shown_local_mods?
+      if shown_fs_mods?
         unless @meta
           index = Gaucho::Config.new
           index.name = Dir.entries(abs_page_path).find {|file| file =~ /^index\./}
@@ -76,9 +86,9 @@ module Gaucho
     end
 
     # File listing for the Page at the currently "shown" Commit, or from the
-    # filesystem if shown_local_mods? is true.
+    # filesystem if shown_fs_mods? is true.
     def files
-      if shown_local_mods?
+      if shown_fs_mods?
         @files
       else
         commit.files
@@ -91,10 +101,10 @@ module Gaucho
     end
 
     # Either the last commit's committed date, or the most recent file last
-    # modified time, if shown_local_mods? is true.
+    # modified time, if shown_fs_mods? is true.
     def date
-      if shown_local_mods?
-        @files_last_modified
+      if shown_fs_mods?
+        files_last_modified
       else
         commits.last.date
       end
@@ -119,25 +129,29 @@ module Gaucho
       !@commit_ids.empty?
     end
 
-    # If the PageSet "check_mods" option is set and the shown commit is nil,
-    # check to see if the local filesystem has modificiations by building a
-    # filesystem-based file index and comparing it with the file index of the
-    # last Commit.
-    def has_local_mods?
-      if pageset.check_mods
+    # Is the PageSet "check_fs_mods" option set?
+    def check_fs_mods?
+      pageset.check_fs_mods
+    end
+
+    # If check_fs_mods? is true and the shown commit is nil, check to see if the
+    # local filesystem has modificiations by building a filesystem-based file
+    # index and comparing it with the file index of the last Commit.
+    def has_fs_mods?
+      if check_fs_mods?
         build_file_index!
-        @files != commits.last.files
+        !committed? || @files != latest_actual_commit.files
       end
     end
 
     # Are local modifications currently being shown?
-    def shown_local_mods?
-      shown.nil? && has_local_mods?
+    def shown_fs_mods?
+      shown.nil? && has_fs_mods?
     end
 
     # Sort pages by last commit date (most recent first) by default.
     def <=>(other)
-      other.commits.last.committed_date <=> commits.last.committed_date
+      other.date <=> date
     end
 
     # Pass-through all other methods to the underlying metadata object.

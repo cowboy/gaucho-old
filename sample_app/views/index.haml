@@ -5,7 +5,7 @@ Recent content:
   - @pages.each do |p|
     %li
       %a{ href: p.url }= p.title
-      - if p.has_local_mods?
+      - if p.has_fs_mods?
         %i
           %b MODIFIED
       %div= p.subtitle
