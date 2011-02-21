@@ -5,7 +5,7 @@ $:.unshift File.dirname(__FILE__)
 require 'cgi'
 require 'yaml'
 require 'find'
-require 'date'
+require 'time'
 require 'forwardable'
 
 # External stuff.

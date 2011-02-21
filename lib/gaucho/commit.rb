@@ -93,7 +93,7 @@ module Gaucho
     # The date of this Commit. A specified metadata "date" will be used first,
     # with a fallback to the actual Grit::Commit committed_date.
     def date
-      DateTime.parse(meta.date)
+      Time.parse(meta.date)
     rescue
       commit.committed_date
     end
