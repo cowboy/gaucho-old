@@ -101,12 +101,12 @@ module Gaucho
     end
 
     # Either the last commit's committed date, or the most recent file last
-    # modified time, if shown_fs_mods? is true.
+    # modified time (or metadata-specified date) if shown_fs_mods? is true.
     def date
       if shown_fs_mods?
-        files_last_modified
-      else
         commits.last.date
+      else
+        latest_actual_commit.date
       end
     end
 
