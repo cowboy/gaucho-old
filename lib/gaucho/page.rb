@@ -152,6 +152,9 @@ module Gaucho
       docs = []
       YAML.each_document(index.data) {|doc| docs << doc} rescue nil
       docs = [{}, index.data] unless docs.length == 2
+      docs.first.each do |key, value|
+        docs.first[key] = value.collect {|e| e.to_s} if value.class == Array
+      end
       meta = Gaucho::Config.new(docs.first)
       meta.index_name = index.name
 
