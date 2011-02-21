@@ -104,9 +104,9 @@ module Gaucho
 
     # Get a raw Blob URL.
     #
-    # <img src="{{ image.jpg | url }}">
+    # <img src="{{ image.jpg | url }}"/>
     def self.url(o)
-      if o.page.shown_local_mods?
+      if o.page.shown_fs_mods?
         "#{o.page.url}/#{o.name}"
       else
         "#{o.page.commit.url}/#{o.name}"
@@ -135,7 +135,7 @@ module Gaucho
     # {{ image.jpg | image(width: "20", style: "float:right") }}
     def self.image(o)
       o.default_attr = 'alt'
-      %Q{<img src="#{url(o)}"#{o.attrs}>}
+      %Q{<img src="#{url(o)}"#{o.attrs}/>}
     end
 
     # Embed an asset link.
@@ -176,9 +176,9 @@ module Gaucho
       data = page.content if data.nil?
       name = page.meta.index_name if name.nil?
       filter = filter_from_name(name) if filter.nil?
-      #p [name, filter, args, data.class, data.valid_encoding?]
+      p [name, filter, args, data.class, data.valid_encoding?]
 
-      if data.valid_encoding? && data =~ /\{\{/
+      if data.encoding.name == 'UTF-8' && data.valid_encoding? && data =~ /\{\{/
         # Process all {{ ... }} substrings.
         data.gsub!(/\{\{\s*(.*?)\s*\}\}/) do |match|
           # Parse into a name plus array of zero or more filters. I can't really
@@ -290,11 +290,11 @@ module Gaucho
 
       # Attempt to convert args to HTML attributes.
       def html_attrs(map = args.to_hash)
-        if map.class == Hash
+        if map.class == Hash && !map.empty?
           arr = []
           map.each {|key, value| arr << %Q{#{key}="#{CGI::escapeHTML(value.to_s)}"}}
           " #{arr.join(' ')}"
-        elsif map.class == String
+        elsif map.class == String && !map.empty?
           " #{map}"
         else
           ''
