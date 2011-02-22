@@ -66,6 +66,9 @@ module Gaucho
       toc.gsub!(/(<a href="#)([^"]+)(")/, &block)
       content.gsub!(/(<h\d id=")([^"]+)(")/, &block)
 
+      # Give the TOC a class for styling / etc.
+      toc.sub!(/(<ul)/, '\1 class="toc"')
+
       # Insert generated TOC into content.
       content.gsub(/<!--TOC_PLACEHOLDER-->/, toc)
     end
