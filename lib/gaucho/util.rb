@@ -29,6 +29,25 @@ module Gaucho
     def transliterate(str)
       UnicodeUtils.nfkd(str).gsub(/[^\x00-\x7F]/, '').to_s
     end
+    
+    # Attempt to smartly eval a string
+    def evalify(arg = '')
+      defined = eval("defined?(#{arg})")
+      #puts "#{arg} -> defined: #{defined || 'nil'}"
+      if defined.nil? || defined =~ /^(?:expression|true|false|nil)$/
+        eval(arg)
+      else
+        arg
+      end
+    rescue NameError
+      arg
+    rescue SyntaxError
+      begin
+        eval("{#{arg}}")
+      rescue SyntaxError
+        arg
+      end
+    end
   end
 
   # More friendly looking dot-syntax access for hash keys.

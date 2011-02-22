@@ -252,23 +252,12 @@ module Gaucho
       attr_accessor :default_attr
 
       def initialize(page, data, options, name, args)
-        # Attempt to convert args to hash or array.
-        args = begin
-          eval(args)
-        rescue Exception
-          begin
-            eval("{#{args}}")
-          rescue Exception
-            args
-          end
-        end || {}
-
         super({
           page: page,
           data: data,
           options: options,
           name: name,
-          args: args
+          args: self.class.evalify(args)
         })
       end
 
