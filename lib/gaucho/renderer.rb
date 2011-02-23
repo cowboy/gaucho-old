@@ -44,7 +44,7 @@ module Gaucho
       args = opts.to_a.map{|key, value| value ? key : nil}.compact
 
       rd = RDiscount.new(o.data, *args)
-      content = rd.to_html
+      content = fix_encoding(rd.to_html)
 
       return content unless opts[:generate_toc]
 
