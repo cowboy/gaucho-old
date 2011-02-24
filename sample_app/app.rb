@@ -165,12 +165,22 @@ end
       redirect '/'
     end
 
+    def tags(pages = @pages)
+      tags = []
+      tmp = {}
+      pages.each {|p| p.tags.each {|t| tmp[t] ||= 0; tmp[t] += 1}}
+      tmp.each {|t, n| tags << Gaucho::Config.new(tag: t, count: n)}
+      min, max = tags.collect {|t| t.count}.minmax
+      tags.sort! {|a, b| a.tag <=> b.tag}
+      tags.each {|t| t.scale = [(200 * (t.count - min)) / (max - min), 100].max}
+    end
+
     # INDEX
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
       p ['index', params[:captures]]
       #start_time = Time.now
       @pages = $pageset.reset_shown
-      @tags = @pages.collect {|c| c.tags}.flatten.uniq.sort
+      @tags = tags
       @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
       #@pages = pages_categorized('music')
       @title = 'omg index'
@@ -184,7 +194,7 @@ end
       @pages = $pageset.reset_shown
       @pages.reject! {|p| p.tags.index(tag).nil?}.sort
       @title = %Q{Stuff tagged &ldquo;#{tag}&rdquo;}
-      @tags = [tag]
+      @tags = tags
       @cats = @pages.collect {|cat| cat.categories}.flatten.uniq.sort
       @index_back = true
       haml :index
@@ -198,7 +208,7 @@ end
       @pages.reject! {|p| p.categories.index(cat).nil?}.sort
       pass if @pages.empty?
       @title = %Q{Stuff categorized &ldquo;#{cat}&rdquo;}
-      @tags = @pages.collect {|tag| tag.tags}.flatten.uniq.sort
+      @tags = tags
       @cats = [cat]
       @index_back = true
       haml :index

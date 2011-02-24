@@ -30,7 +30,7 @@ All categories:
       %a{ href: cat_url(cat) }= cat
 
 All tags:
-%ul#all_tags
+%ul#all_tags.tag-cloud
   - @tags.each do |tag|
     %li
-      %a{ href: tag_url(tag) }= tag
+      %a{ style: "font-size: #{tag.scale}%", href: tag_url(tag.tag) }= tag.tag
