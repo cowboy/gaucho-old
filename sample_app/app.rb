@@ -35,20 +35,37 @@ end
 module Gaucho
   module Renderer
     # A basic syntax highlighter "code" filter.
-    filter_map[:code] = [:html, :js, :css, :php, :sh, :rb, :applescript]
+    filter_map[:code] = [:html, :js, :css, :php, :sh, :rb, :applescript, :irc]
     filter_map.delete(:html)
     def self.code(o)
       return invalid_encoding(o.name) unless o.valid_data?
+      nolines = o.args.to_hash.delete(:nolines)
+      ext = o.args.delete(:type) || File.extname(o.name)[1..-1]
       # TODO: figure out options: hl_lines: [1,3,5], linenostart
-      args = {encoding: 'utf-8', linenos: :table, anchorlinenos: true, lineanchors: o.name}.merge(o.args)
-      code = Pygments.highlight(o.data, File.extname(o.name)[1..-1], :html, args)
-      %Q{<div class="sh"><div class="sh-link">#{link(o)}</div><div class="sh-code">#{code}</div></div>}
+      args = {encoding: 'utf-8'}
+      args.merge!(linenos: :table, anchorlinenos: true, lineanchors: o.name) unless nolines
+      args.merge!(o.args)
+      code = Pygments.highlight(o.data, ext, :html, args)
+      %Q{<div class="sh sh-#{nolines ? 'no' : ''}lines"><div class="sh-link">#{link(o)}</div><div class="sh-code">#{code}</div></div>}
     end
 
-    # Flickr photo(s)
+    # Flickr photo.
     def self.flickr(o)
       img = %Q{<img src="#{o.name}"/>}
       o.args ? %Q{<a href="http://www.flickr.com/photos/rj3/#{o.args}">#{img}</a>} : img
+    end
+
+    # Soundcloud player.
+    def self.soundcloud(o)
+      url = CGI::escape(o.name)
+      unindent(<<-EOF)
+      <object height="81" width="100%">
+        <param name="movie" value="http://player.soundcloud.com/player.swf?url=#{url}&amp;show_comments=true&amp;auto_play=false&amp;color=ff7700"></param>
+        <param name="allowscriptaccess" value="always"></param>
+        <param name="wmode" value="window"></param>
+        <embed wmode="window" allowscriptaccess="always" height="81" src="http://player.soundcloud.com/player.swf?url=#{url}&amp;show_comments=true&amp;auto_play=false&amp;color=ff7700" type="application/x-shockwave-flash" width="100%"></embed>
+      </object>
+      EOF
     end
   end
 

@@ -29,24 +29,30 @@ module Gaucho
     def transliterate(str)
       UnicodeUtils.nfkd(str).gsub(/[^\x00-\x7F]/, '').to_s
     end
-    
+
     # Attempt to smartly eval a string
-    def evalify(arg = '')
-      defined = eval("defined?(#{arg})")
-      #puts "#{arg} -> defined: #{defined || 'nil'}"
+    def evalify(str = '')
+      defined = eval("defined?(#{str})")
+      #puts "#{str} -> defined: #{defined || 'nil'}"
       if defined.nil? || defined =~ /^(?:expression|true|false|nil)$/
-        eval(arg)
+        eval(str)
       else
-        arg
+        str
       end
     rescue NameError
-      arg
+      str
     rescue SyntaxError
       begin
-        eval("{#{arg}}")
+        eval("{#{str}}")
       rescue SyntaxError
-        arg
+        str
       end
+    end
+
+    # Unindent code blocks (like in heredocs).
+    def unindent(str)
+      min = str.lines.map {|line| line =~ /^(\s*)\S/; $1 && $1.length }.compact.min
+      str.lines.map {|line| line.sub(/^\s{#{min}}/, '')}.join
     end
   end
 
