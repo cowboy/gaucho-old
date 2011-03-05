@@ -4,3 +4,5 @@ Gemfile.lock
 pkg/*
 sample_app/test_repo/*
 spec/test_repo/*
+DELETE.rb
+
