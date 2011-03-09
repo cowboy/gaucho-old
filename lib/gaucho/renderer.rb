@@ -105,6 +105,38 @@ module Gaucho
       CGI::escapeHTML(o.data)
     end
 
+    # Embed syntax-highlighted source code.
+    #
+    # {{ source.rb }}
+    # {{ content.html | code }}
+    # {{ chat.irc | code(nolines: true) }}
+    def self.code(o)
+      return invalid_encoding(o.name) unless o.valid_data?
+
+      # `nolines` option will override default (lines).
+      nolines = o.args.to_hash.delete(:nolines)
+
+      # `type` option will override default type.
+      ext = o.args.delete(:type) || File.extname(o.name)[1..-1]
+
+      # Merge args.
+      # TODO: figure out options: hl_lines: [1,3,5], linenostart
+      args = {encoding: 'utf-8'}
+      args.merge!(linenos: :table, anchorlinenos: true, lineanchors: o.name) unless nolines
+      args.merge!(o.args)
+
+      # Construct pygmentize CLI params and highlight code.
+      params = args.map {|k, v| %Q{#{k}="#{v}"}}.join ' -P '
+      code = Pygments.new(o.data, ext, :html).colorize(P: params)
+
+      <<-EOF
+<div class="sh sh-#{nolines ? 'no' : ''}lines">
+  <div class="sh-link">#{link(o)}</div>
+  <div class="sh-code">#{code}</div>
+</div>
+      EOF
+    end
+
     # Get a raw Blob URL.
     #
     # <img src="{{ image.jpg | url }}"/>
@@ -167,6 +199,7 @@ module Gaucho
       html: [:htm],
       text: [:txt],
       image: [:jpg, :jpeg, :gif, :png],
+      code: [:js, :css, :php, :rb, :sh, :applescript, :irc]
     }
 
     # Expose @@filter_map and @@filter_default to allow modifications.

@@ -4,7 +4,7 @@ require 'rack/cache'
 require 'haml'
 require 'mime/types'
 require 'diffy'
-require 'rb-pygments'
+require 'pygments'
 
 require '../lib/gaucho'
 
@@ -24,31 +24,8 @@ module Diffy
   end
 end
 
-# Pygments limitation workaround (the inability to handle the -a argument for an
-# html style.
-module Pygments
-  def self.style(style, formatter, options = [])
-    execute(["-S", style, "-f", formatter] + options)
-  end
-end
-
 module Gaucho
   module Renderer
-    # A basic syntax highlighter "code" filter.
-    filter_map[:code] = [:html, :js, :css, :php, :sh, :rb, :applescript, :irc]
-    filter_map.delete(:html)
-    def self.code(o)
-      return invalid_encoding(o.name) unless o.valid_data?
-      nolines = o.args.to_hash.delete(:nolines)
-      ext = o.args.delete(:type) || File.extname(o.name)[1..-1]
-      # TODO: figure out options: hl_lines: [1,3,5], linenostart
-      args = {encoding: 'utf-8'}
-      args.merge!(linenos: :table, anchorlinenos: true, lineanchors: o.name) unless nolines
-      args.merge!(o.args)
-      code = Pygments.highlight(o.data, ext, :html, args)
-      %Q{<div class="sh sh-#{nolines ? 'no' : ''}lines"><div class="sh-link">#{link(o)}</div><div class="sh-code">#{code}</div></div>}
-    end
-
     # Flickr photo.
     def self.flickr(o)
       img = %Q{<img src="#{o.name}"/>}
