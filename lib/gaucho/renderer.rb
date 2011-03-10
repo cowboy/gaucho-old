@@ -130,11 +130,11 @@ module Gaucho
       params = args.map {|k, v| %Q{#{k}="#{v}"}}.join ' -P '
       code = Pygments.new(o.data, ext, :html).colorize(P: params)
 
-      <<-EOF
-<div class="sh sh-#{nolines ? 'no' : ''}lines">
-  <div class="sh-link">#{link(o)}</div>
-  <div class="sh-code">#{code}</div>
-</div>
+      unindent(<<-EOF)
+        <div class="sh sh-#{nolines ? 'no' : ''}lines">
+          <div class="sh-link">#{link(o)}</div>
+          <div class="sh-code">#{code.gsub(/^/, '  ' * 4)}</div>
+        </div>
       EOF
     end
 
