@@ -110,6 +110,7 @@ module Gaucho
     # {{ source.rb }}
     # {{ content.html | code }}
     # {{ chat.irc | code(nolines: true) }}
+    # {{ rubyfile.txt | code(type: :ruby) }}
     def self.code(o)
       return invalid_encoding(o.name) unless o.valid_data?
 
@@ -117,7 +118,7 @@ module Gaucho
       nolines = o.args.to_hash.delete(:nolines)
 
       # `type` option will override default type.
-      ext = o.args.delete(:type) || File.extname(o.name)[1..-1]
+      ext = o.args.to_hash.delete(:type) || File.extname(o.name)[1..-1]
 
       # Merge args.
       # TODO: figure out options: hl_lines: [1,3,5], linenostart
@@ -192,14 +193,14 @@ module Gaucho
 
     # Which filter should be used, by default, for a given file extension? If
     # a matching filter isn't found, the @@filter_default value is used.
-    @@filter_default = :text
+    @@filter_default = :code
     @@filter_map = {
       toc: [:toc], # hackish
       markdown: [:md],
-      html: [:htm],
+      html: [:inc, :ssi],
       text: [:txt],
       image: [:jpg, :jpeg, :gif, :png],
-      code: [:js, :css, :php, :rb, :sh, :applescript, :irc]
+      code: [:html, :js, :css, :rb]
     }
 
     # Expose @@filter_map and @@filter_default to allow modifications.
@@ -256,11 +257,11 @@ module Gaucho
 
       ext = $1.downcase.to_sym
 
-      type = filter_map.collect do |filter, exts|
-        filter if filter == ext || exts.find {|e| e == ext}
-      end
+      map_arr = filter_map.to_a
+      type = map_arr.select {|filter, exts| exts.find {|e| e == ext}}
+      type = map_arr.select {|filter, exts| filter == ext} if type.empty?
 
-      type = type.compact.first || filter_default
+      type.empty? ? filter_default : type.first.first
     end
 
     # Handle binary or invalidly encoded data in a helpful way.
