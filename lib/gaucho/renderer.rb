@@ -122,13 +122,13 @@ module Gaucho
 
       # Merge args.
       # TODO: figure out options: hl_lines: [1,3,5], linenostart
-      args = {encoding: 'utf-8'}
+      args = {}
       args.merge!(linenos: :table, anchorlinenos: true, lineanchors: o.name) unless nolines
       args.merge!(o.args)
 
       # Construct pygmentize CLI params and highlight code.
-      params = args.map {|k, v| %Q{#{k}="#{v}"}}.join ' -P '
-      code = Pygments.new(o.data, ext, :html).colorize(P: params)
+      params = args.map {|k, v| ['-P', %Q{#{k}="#{v}"}]}.flatten
+      code = Pygmentize.process(o.data, ext, params)
 
       unindent(<<-EOF)
         <div class="sh sh-#{nolines ? 'no' : ''}lines">
@@ -326,6 +326,24 @@ module Gaucho
           ''
         end
       end
+    end
+  end
+end
+
+# Hopefully this will go away soon.
+# https://github.com/djanowski/pygmentize/pull/1
+class Pygmentize
+  def self.process(source, lexer, args = [])
+    args += [
+      "-l", lexer.to_s,
+      "-f", "html",
+      "-O", "encoding=#{source.encoding}"
+    ]
+
+    IO.popen("#{bin} #{Shellwords.shelljoin args}", "r+") do |io|
+      io.write(source)
+      io.close_write
+      io.read
     end
   end
 end

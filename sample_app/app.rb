@@ -4,7 +4,6 @@ require 'rack/cache'
 require 'haml'
 require 'mime/types'
 require 'diffy'
-require 'pygments'
 
 require '../lib/gaucho'
 

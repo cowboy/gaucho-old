@@ -12,6 +12,7 @@ require 'forwardable'
 require 'grit'
 require 'rdiscount'
 require 'unicode_utils'
+require 'pygmentize'
 
 # Gaucho stuff.
 require 'gaucho/version'
