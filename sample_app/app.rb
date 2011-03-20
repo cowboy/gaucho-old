@@ -152,6 +152,21 @@ end
           d.to_s(:html)
         end
       end
+      # Get all pages in a category, grouped by the other categories.
+      def pages_by_category(cat)
+        result = {}
+        @pages.each do |page|
+          if page.categories.index(cat)
+            page.categories.each do |c|
+              if c != cat
+                result[c] ||= []
+                result[c] << page
+              end
+            end
+          end
+        end
+        result
+      end
     end
 
     before do
@@ -186,6 +201,23 @@ end
       @tags = tags
       @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
       #@pages = pages_categorized('music')
+      #@pages.reject! {|page| page.date?}
+      count = @pages.length
+      not_dated = @pages.reject {|page| page.date?}
+      dated = @pages.select {|page| page.date?}
+
+      # All project pages, sorted by other-category.
+      @projects = pages_by_category('Projects')
+      # All article pages, sorted by other-category.
+      @articles = pages_by_category('Articles')
+      
+=begin
+      @pages = not_dated.select {|page| page.categories.index('Projects')} +
+        not_dated.reject {|page| page.categories.index('Projects')} +
+        dated.select {|page| page.categories.index('Music')} +
+        dated.reject {|page| page.categories.index('Music')}
+=end
+      # + @pages.select {|page| page.date?}
       @title = 'omg index'
       haml :index
     end

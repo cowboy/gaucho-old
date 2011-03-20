@@ -1,5 +1,17 @@
 %h1= @title
 
+%h2 Projects
+- @projects.each do |title, pages|
+  %h3= title
+  %ul
+    - pages.each do |p|
+      %li
+        %a{ href: p.url }= p.title
+        - if p.has_fs_mods?
+          %i
+            %b MODIFIED
+        %i= ' - ' + p.subtitle
+
 Recent content:
 %ul#all_content
   - @pages.each do |p|
@@ -10,10 +22,10 @@ Recent content:
           %b MODIFIED
       %div= p.subtitle
       -#%div= p.commit.id
-      -#%div
-      -#  categories:
-      -#  - p.categories.each do |cat|
-      -#    %a{ href: cat_url(cat) }= cat
+      %div
+        categories:
+        - p.categories.each do |cat|
+          %a{ href: cat_url(cat) }= cat
       -#%div
       -#  tagged:
       -#  - p.tags.each do |tag|
