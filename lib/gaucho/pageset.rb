@@ -60,7 +60,8 @@ module Gaucho
     # one doesn't already exist. If the page has been renamed via the renames
     # options hash, return the new URL (for redirecting).
     def [](page_id)
-      page_id.gsub!('/', '-')
+      # TODO: compute this in build_page! (?)
+      page_id = page_id.sub(%r{(.*)/}, '\1_').gsub(%r{/}, ?-)
 
       build_page!(page_id)
       page = @pages_by_id[page_id]

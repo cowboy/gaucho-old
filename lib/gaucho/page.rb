@@ -19,11 +19,12 @@ module Gaucho
       %Q{#<Gaucho::Page "#{url}" "#{commit.id}">}
     end
 
-    # Canonical URL for this Page. Replace any dashes in leading YYYY-,
-    # YYYY-MM- or YYYY-MM-DD- with slashes.
+    # Canonical URL for This Page. Replace any dashes and underscore in
+    # leading date (YYYY_ or YYYY-MM_ or YYYY-MM-DD_) with slashes.
     def url
-      url = path.sub(%r{^(\d{4}(?:-\d{2}){0,2}-)}) {|d| d.gsub('-', '/')}
-      "/#{url}"
+      parts = id.split ?_
+      parts[0].gsub!(/-/, ?/) if parts[1]
+      "/#{parts.join ?/}"
     end
 
     # Set the current Page to show the specified commit. Specifying nil
@@ -62,10 +63,10 @@ module Gaucho
     # passed, returns true if this Page's id begins with a date.
     def date?(date_arr = nil)
       if date_arr
-        date_arr.split!(%r{[/-]}) if date_arr.class == String
-        id.start_with?("#{date_arr.join('-')}-")
+        date_arr.split!(/\D+/) if date_arr.class == String
+        id.start_with?("#{date_arr.join('-')}_")
       else
-        !!%r{^\d{4}-(?:\d{2}-){0,2}\D}.match(id)
+        !!%r{^\d{4}(?:-\d{2}){0,2}_}.match(id)
       end
     end
 
