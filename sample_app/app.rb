@@ -255,7 +255,7 @@ end
     #   YYYY/name
     #   YYYY/MM/name
     #   YYYY/MM/DD/name
-    get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[-\w]+)(?:/(.+))?$} do |sha, name, file|
+    get %r{^(?:/([0-9a-f]{7}))?/((?:\d{4}(?:/\d{2}){0,2}/)?[^/]+)(?:/(.+))?$} do |sha, name, file|
       p ['page', params[:captures]]
 
       begin
