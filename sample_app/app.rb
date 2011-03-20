@@ -4,6 +4,7 @@ require 'rack/cache'
 require 'haml'
 require 'mime/types'
 require 'diffy'
+require 'uri'
 
 require '../lib/gaucho'
 
@@ -39,9 +40,18 @@ module Gaucho
         <param name="movie" value="http://player.soundcloud.com/player.swf?url=#{url}&amp;show_comments=true&amp;auto_play=false&amp;color=ff7700"></param>
         <param name="allowscriptaccess" value="always"></param>
         <param name="wmode" value="window"></param>
-        <embed wmode="window" allowscriptaccess="always" height="81" src="http://player.soundcloud.com/player.swf?url=#{url}&amp;show_comments=true&amp;auto_play=false&amp;color=ff7700" type="application/x-shockwave-flash" width="100%"></embed>
+        <embed wmode="window" src="http://player.soundcloud.com/player.swf?url=#{url}&amp;show_comments=true&amp;auto_play=false&amp;color=ff7700"
+        allowscriptaccess="always" height="81" type="application/x-shockwave-flash" width="100%"></embed>
       </object>
       EOF
+    end
+
+    # Open AppleScript in Script Editor.
+    self.filter_map[:applescript] = [:applescript]
+    def self.applescript(o)
+      script = URI.escape(o.data)
+      %Q{<a href="applescript://com.apple.scripteditor?action=new&script=#{script}">} +
+        %Q{Click here</a> to open this AppleScript in Script Editor. #{code(o)}}
     end
   end
 
