@@ -1,0 +1,247 @@
+@import "compass"
+
+// Main styles.
+
+#content
+  width: 40em
+  color: #333
+  font-family: Georgia
+  img
+    border: 1px solid #333
+  .noborder
+    border: none
+    box-shadow: none
+
+#content img, .sh-code
+  box-shadow: 0px 2px 4px #aaa
+
+h1, h2, h3, h4
+  font-family: "Gill Sans"
+  font-weight: 400
+h1
+  font-size: 250%
+  margin-bottom: 0
+h2
+  font-size: 180%
+h3
+  font-size: 150%
+h4
+  font-size: 120%
+
+p
+  line-height: 1.4em
+  &.subtitle
+    font-style: italic
+    font-size: 160%
+    color: #777
+    margin: 0
+  &.last_updated
+    color: #aaa
+    font-size: 80%
+
+a
+  color: #ff7700
+  -webkit-transition: color 0.1s linear
+  &:hover
+    color: #aa3300
+  code
+    text-decoration: underline
+
+img
+  vertical-align: top
+
+code, pre, .sh-link
+  font-family: "Consolas", "Courier New", Courier, monospace
+  font-size: 0.9em
+code
+  background: #eee
+  border: 1px solid #aaa
+  color: #555
+  padding: 4px 0.2em 1px
+  webkit-border-radius: 4px
+
+
+// Misc.
+
+.tag-cloud li
+  display: inline
+  font-style: none
+
+
+
+// Project listing.
+
+ul.projects
+  &, li
+    list-style: none
+    margin: 0
+    padding: 0
+  li
+    position: relative
+    z-index: 0
+    left: -4px
+    right: -4px
+    padding-left: 4px
+    padding-right: 4px
+    padding-top: 2px
+    border-top-left-radius: 10px
+    border-top-right-radius: 10px
+    &, .meta, .reveal
+      -webkit-transition: 0.1s ease-out
+      -webkit-transition-delay: 0.1s
+      -webkit-transition-property: height, color, background, border, box-shadow
+    &, .reveal
+      border: 1px solid rgba(0, 0, 0, 0)
+    .meta
+      color: #ccc
+      font-size: 70%
+    .reveal
+      background: #fff
+      font-size: 80%
+      padding: 3px 4px 0
+      position: absolute
+      left: -1px
+      right: -1px
+      height: 0
+      overflow: hidden
+      border-bottom-left-radius: 10px
+      border-bottom-right-radius: 10px
+      a
+        color: inherit
+        text-decoration: none
+      > *
+        margin: 0.2em 0 0.4em 0
+    &.hover
+      z-index: 1
+      .meta
+        color: #AA9A89
+      .reveal
+        border-color: #000
+        border-top: none !important
+      &, .reveal
+        background: #fed
+        border: 1px solid #000
+        box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.4)
+
+// Diffs.
+
+.diff
+  overflow: auto
+  ul
+    color: #000
+    background: #fff
+    overflow: auto
+    font-size: 13px
+    list-style: none
+    margin: 0
+    padding: 0
+    display: table
+    width: 100%
+    del, ins
+      display: block
+      text-decoration: none
+    li
+      padding: 0
+      display: table-row
+      margin: 0
+      height: 1em
+      &.ins
+        background: #dfd
+      &.del
+        background: #fdd
+      &:hover
+        background: #ffc
+    del, ins, span
+      // Try 'whitespace: pre' if you don't want lines to wrap
+      white-space: pre-wrap
+      font-family: courier
+    del strong
+      font-weight: normal
+      background: #faa
+    ins strong
+      font-weight: normal
+      background: #afa
+
+
+// Syntax highlighting.
+@import twilight
+
+.sh
+  width: 42em
+  color: #F8F8F8
+.sh-code
+  overflow: hidden
+  background: #181818
+  border: 2px solid #181818
+  -webkit-border-radius: 12px
+  -webkit-border-top-right-radius: 0
+.highlighttable
+  margin: 0
+  padding: 0
+  border-collapse: collapse
+  td
+    margin: 0
+    padding: 0
+    vertical-align: top
+  .highlight
+    width: 39.4em
+    overflow: auto
+    padding: 6px 6px 3px
+    a
+      position: absolute
+      // Vertical offset for fragment linking.
+      margin-top: -2em
+  .linenos
+    color: #aaa
+    background: #444
+    border-right: 2px solid #181818
+    -webkit-border-top-left-radius: 10px
+    -webkit-border-bottom-left-radius: 10px
+  .linenodiv
+    padding: 6px 3px 3px 5px
+    a
+      color: #aaa
+      text-decoration: none
+      &:hover
+        color: #fff
+        text-decoration: underline
+  pre
+    margin: 0
+    line-height: 125%
+
+.sh-link
+  text-align: right
+  a
+    text-decoration: none
+    color: #aaa
+    background: #181818
+    padding: 0.5em 0.5em 0.2em 0.6em
+    -webkit-border-top-left-radius: 10px
+    -webkit-border-top-right-radius: 10px
+    &:hover
+      text-decoration: underline
+      color: #fff
+
+// No line numbers.
+.sh-nolines .highlight
+  background: #181818
+  padding: 4px
+  pre
+    margin: 0
+    white-space: pre-wrap
+
+// WebKit Scrollbar.
+// Adapted from http://beautifulpixels.com/goodies/create-custom-webkit-scrollbar/
+body ::-webkit-scrollbar
+  height: 12px
+::-webkit-scrollbar-button:start, ::-webkit-scrollbar-button:end
+  display: none
+::-webkit-scrollbar-track-piece, ::-webkit-scrollbar-thumb
+  -webkit-border-radius: 8px
+::-webkit-scrollbar-track-piece
+  background-color: #444
+::-webkit-scrollbar-thumb:horizontal
+  width: 50px
+  background-color: #777
+::-webkit-scrollbar-thumb:hover
+  background-color: #aaa

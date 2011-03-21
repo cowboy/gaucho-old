@@ -6,3 +6,5 @@ sample_app/test_repo/*
 spec/test_repo/*
 DELETE.rb
 
+
+/sample_app/.sass-cache/

@@ -1,4 +1,6 @@
 require 'sinatra'
+require 'sinatra/advanced_routes'
+require 'sinatra/compass'
 require 'rack/cache'
 
 require 'haml'
@@ -176,6 +178,11 @@ end
     not_found do
       "<h1>OMG 404</h1>#{' '*512}"
     end
+
+    get '/favicon.ico' do; 'COMING SOON'; end
+
+    register Sinatra::Compass
+    get_compass 'css'
 
     # TODO: REMOVE?
     get '/rebuild' do
