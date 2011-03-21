@@ -1,6 +1,7 @@
 module Gaucho
   class Page
     def render(data = nil, options = {})
+      data = self.public_send(data) if data.class == Symbol
       Gaucho::Renderer.render_page(self, data, options)
     end
   end

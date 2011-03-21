@@ -15,7 +15,7 @@
         %i= ' - ' + p.subtitle
         %div.meta
           %em Last updated on #{date_format(p.date)}
-        %div.reveal= p.render(p.excerpt)
+        %div.reveal= p.render(:excerpt)
 
 Recent content:
 %ul#all_content
