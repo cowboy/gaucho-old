@@ -3,14 +3,19 @@
 %h2 Projects
 - @projects.each do |title, pages|
   %h3= title
-  %ul
+  %ul.projects
     - pages.each do |p|
+      - t = p.title.sub(/#{title}[ :]*/i, '')
+      - t = t[/[A-Z]/] ? t : "#{t[0].upcase}#{t[1..-1]}"
       %li
-        %a{ href: p.url }= p.title
+        %a{ href: p.url }= t
         - if p.has_fs_mods?
           %i
             %b MODIFIED
         %i= ' - ' + p.subtitle
+        %div.meta
+          %em Last updated on #{date_format(p.date)}
+        %div.reveal= p.render(p.excerpt)
 
 Recent content:
 %ul#all_content
