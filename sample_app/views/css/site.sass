@@ -58,16 +58,13 @@ code
   border: 1px solid #aaa
   color: #555
   padding: 4px 0.2em 1px
-  webkit-border-radius: 4px
-
+  -webkit-border-radius: 4px
 
 // Misc.
 
 .tag-cloud li
   display: inline
   font-style: none
-
-
 
 // Project listing.
 
@@ -81,20 +78,34 @@ ul.projects
     z-index: 0
     left: -4px
     right: -4px
-    padding-left: 4px
-    padding-right: 4px
-    padding-top: 2px
+    padding: 2px 4px 4px
     border-top-left-radius: 10px
     border-top-right-radius: 10px
-    &, .meta, .reveal
+    &, *
       -webkit-transition: 0.1s ease-out
       -webkit-transition-delay: 0.1s
       -webkit-transition-property: height, color, background, border, box-shadow
     &, .reveal
       border: 1px solid rgba(0, 0, 0, 0)
     .meta
-      color: #ccc
+      color: #aaa
       font-size: 70%
+      margin-top: 3px
+      .github
+        position: relative
+        z-index: 1
+        > *
+          margin-left: 0.3em
+        a
+          color: #aaa
+          border: 1px solid #aaa
+          padding: 1px 0.3em
+          -webkit-border-radius: 4px
+          text-decoration: none
+          &:hover
+            color: #aa3300
+            border-color: #aa3300
+            background: #fed
     .reveal
       background: #fff
       font-size: 80%
@@ -115,6 +126,10 @@ ul.projects
       z-index: 1
       .meta
         color: #AA9A89
+        .github a
+          background: none
+          border: 1px solid #AA9A89
+          color: #AA9A89
       .reveal
         border-color: #000
         border-top: none !important
@@ -164,6 +179,7 @@ ul.projects
 
 
 // Syntax highlighting.
+
 @import twilight
 
 .sh
@@ -223,6 +239,7 @@ ul.projects
       color: #fff
 
 // No line numbers.
+
 .sh-nolines .highlight
   background: #181818
   padding: 4px
@@ -232,6 +249,7 @@ ul.projects
 
 // WebKit Scrollbar.
 // Adapted from http://beautifulpixels.com/goodies/create-custom-webkit-scrollbar/
+
 body ::-webkit-scrollbar
   height: 12px
 ::-webkit-scrollbar-button:start, ::-webkit-scrollbar-button:end

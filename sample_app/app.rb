@@ -218,6 +218,7 @@ end
       # All article pages, sorted by other-category.
       @articles = pages_by_category('Articles')
       
+      @pages = []
 =begin
       @pages = not_dated.select {|page| page.categories.index('Projects')} +
         not_dated.reject {|page| page.categories.index('Projects')} +
