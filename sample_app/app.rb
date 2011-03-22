@@ -155,9 +155,9 @@ end
         end
       end
       # Get all pages in a category, grouped by the other categories.
-      def pages_by_category(cat)
+      def pages_by_category(pages, cat)
         result = {}
-        @pages.each do |page|
+        pages.each do |page|
           if page.categories.index(cat)
             page.categories.each do |c|
               if c != cat
@@ -204,19 +204,24 @@ end
     get %r{^(?:/([0-9a-f]{7}))?/?$} do |sha|
       p ['index', params[:captures]]
       #start_time = Time.now
-      @pages = $pageset.reset_shown
-      @tags = tags
-      @cats = @pages.collect {|c| c.categories}.flatten.uniq.sort
+      puts 1
+      @pages = $pageset #.reset_shown
+      puts 2
+      @tags = [] #tags
+      @cats = [] #@pages.collect {|c| c.categories}.flatten.uniq.sort
+      puts 3
       #@pages = pages_categorized('music')
       #@pages.reject! {|page| page.date?}
-      count = @pages.length
-      not_dated = @pages.reject {|page| page.date?}
-      dated = @pages.select {|page| page.date?}
+      #count = @pages.length
+      puts 4
+
+      #$not_dated ||= @pages.reject {|page| page.date?}
+      #$dated ||= @pages.select {|page| page.date?}
 
       # All project pages, sorted by other-category.
-      @projects = pages_by_category('Projects')
+      $projects ||= pages_by_category($pageset, 'Projects')
       # All article pages, sorted by other-category.
-      @articles = pages_by_category('Articles')
+      $articles ||= pages_by_category($pageset, 'Articles')
       
       @pages = []
 =begin

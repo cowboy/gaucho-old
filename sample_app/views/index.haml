@@ -1,7 +1,7 @@
 %h1= @title
 
 %h2 Projects
-- @projects.each do |title, pages|
+- $projects.each do |title, pages|
   %h3= title
   %ul.projects
     - pages.each do |p|
